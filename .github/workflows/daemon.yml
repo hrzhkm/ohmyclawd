@@ -1,0 +1,51 @@
+name: daemon
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'daemon/**'
+      - '.github/workflows/daemon.yml'
+  pull_request:
+    paths:
+      - 'daemon/**'
+      - '.github/workflows/daemon.yml'
+
+concurrency:
+  group: daemon-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: daemon
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: daemon/go.mod
+          cache: false  # zero external deps; no go.sum exists
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: go test -race
+        run: go test -race -count=1 -coverprofile=coverage.out ./...
+
+      - name: go build
+        run: go build -trimpath -ldflags='-s -w' -o /tmp/ohmyclawd-daemon .
+
+      - name: smoke /healthz
+        run: |
+          /tmp/ohmyclawd-daemon --fake &
+          DAEMON_PID=$!
+          sleep 6
+          curl -sf http://localhost:8787/healthz | grep -q '^ok$'
+          curl -sf http://localhost:8787/usage | grep -q '"ok":true'
+          kill $DAEMON_PID

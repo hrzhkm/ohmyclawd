@@ -1,11 +1,11 @@
 [Unit]
-Description=ohmycc daemon — probes Anthropic for Claude Code utilization
+Description=ohmyclawd daemon — probes Anthropic for Claude Code utilization
 Wants=network-online.target
 After=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/ohmycc-daemon
+ExecStart=/usr/local/bin/ohmyclawd-daemon
 Restart=always
 RestartSec=5
 User=__OHMYCC_USER__

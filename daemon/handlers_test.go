@@ -68,9 +68,9 @@ func TestMetricsHandler(t *testing.T) {
 	}
 	body := rr.Body.String()
 	for _, want := range []string{
-		"ohmycc_probe_total 1",
-		"ohmycc_probe_fail_total 1",
-		"ohmycc_probe_last_age_seconds 60",
+		"ohmyclawd_probe_total 1",
+		"ohmyclawd_probe_fail_total 1",
+		"ohmyclawd_probe_last_age_seconds 60",
 	} {
 		if !strings.Contains(body, want) {
 			t.Fatalf("missing %q in:\n%s", want, body)

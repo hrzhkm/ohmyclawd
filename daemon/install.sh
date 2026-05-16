@@ -18,13 +18,13 @@ if ! id -u "${TARGET_USER}" >/dev/null 2>&1; then
 fi
 
 cd "$(dirname "$0")"
-go build -trimpath -ldflags='-s -w' -o ohmycc-daemon .
-install -m 0755 ohmycc-daemon /usr/local/bin/ohmycc-daemon
+go build -trimpath -ldflags='-s -w' -o ohmyclawd-daemon .
+install -m 0755 ohmyclawd-daemon /usr/local/bin/ohmyclawd-daemon
 
-sed "s|__OHMYCC_USER__|${TARGET_USER}|g" systemd/ohmycc-daemon.service \
-  > /etc/systemd/system/ohmycc-daemon.service
+sed "s|__OHMYCC_USER__|${TARGET_USER}|g" systemd/ohmyclawd-daemon.service \
+  > /etc/systemd/system/ohmyclawd-daemon.service
 
 systemctl daemon-reload
-systemctl enable ohmycc-daemon.service
-systemctl restart ohmycc-daemon.service
-systemctl --no-pager status ohmycc-daemon.service | head -10
+systemctl enable ohmyclawd-daemon.service
+systemctl restart ohmyclawd-daemon.service
+systemctl --no-pager status ohmyclawd-daemon.service | head -10

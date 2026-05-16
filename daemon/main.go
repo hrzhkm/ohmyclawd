@@ -29,7 +29,7 @@ func main() {
 
 	if *fakeMode {
 		go runFake(ctx, state)
-		log.Printf("ohmycc-daemon listening on %s (fake mode)", listen)
+		log.Printf("ohmyclawd-daemon listening on %s (fake mode)", listen)
 	} else {
 		creds, err := LoadCreds(credsPath)
 		if err != nil {
@@ -48,7 +48,7 @@ func main() {
 			ReloadCreds: func() (*Creds, error) { return LoadCreds(credsPath) },
 		}
 		go RunLoop(ctx, prober, state, metrics, cfg)
-		log.Printf("ohmycc-daemon listening on %s (probing %s every %s)", listen, anthropicURL, probeInterval)
+		log.Printf("ohmyclawd-daemon listening on %s (probing %s every %s)", listen, anthropicURL, probeInterval)
 	}
 
 	srv := &http.Server{Addr: listen, Handler: handler, ReadHeaderTimeout: 5 * time.Second}

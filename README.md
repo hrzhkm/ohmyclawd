@@ -52,10 +52,44 @@ tft.invertDisplay(true);   // try false if colors are inverted
 ```
 ├── platformio.ini        # Build config, pin definitions, library deps
 ├── claudepix/            # Source HTML animations from claudepix
+├── daemon/               # ohmyclawd daemon (Go) - polls Anthropic API
+│   ├── main.go           # HTTP server on :8787
+│   ├── probe.go          # Anthropic rate-limit header polling
+│   ├── loop.go           # Probe scheduling with backoff
+│   ├── handlers.go       # /usage, /healthz, /metrics endpoints
+│   ├── usage.go          # Usage struct (JSON wire format)
+│   ├── creds.go          # Claude OAuth credential loader
+│   ├── fake.go           # Fake mode for testing
+│   ├── install.sh        # Install script
+│   └── systemd/          # systemd service file
+├── .github/workflows/    # CI: test + release binary
 └── src/
     ├── main.cpp          # Firmware source
     └── sprite_frames.h   # Generated animation frame data (13 presets)
 ```
+
+## Daemon
+
+The daemon runs on your server, polls the Anthropic API for rate-limit headers, and serves usage data over HTTP.
+
+```bash
+cd daemon
+go build -o ohmyclawd-daemon .
+./ohmyclawd-daemon
+```
+
+Or use the install script for systemd:
+
+```bash
+cd daemon && ./install.sh
+```
+
+Environment variables:
+- `OHMYCLAWD_LISTEN` — listen address (default `:8787`)
+- `OHMYCLAWD_PROBE_INTERVAL` — probe interval (default `60s`)
+- `OHMYCLAWD_CREDS_PATH` — path to Claude credentials (default `~/.claude/.credentials.json`)
+
+Test with fake data: `./ohmyclawd-daemon --fake`
 
 ## Credits
 

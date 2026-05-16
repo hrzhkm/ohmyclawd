@@ -1,4 +1,4 @@
-# ohmycc daemon
+# ohmyclawd daemon
 
 Runs inside the Proxmox VM where Claude Code is used. Probes the Anthropic
 `/v1/messages` endpoint every 60 s with a 1-Haiku-token call and parses the
@@ -11,7 +11,7 @@ ESP32 firmware polls over LAN.
 sudo OHMYCC_USER=youruser ./install.sh
 ```
 
-This builds the static binary, copies it to `/usr/local/bin/ohmycc-daemon`,
+This builds the static binary, copies it to `/usr/local/bin/ohmyclawd-daemon`,
 installs the systemd unit substituting `OHMYCC_USER=youruser`, and starts the
 service. The daemon runs as `youruser` so it can read `~/.claude/.credentials.json`.
 
@@ -27,8 +27,8 @@ All knobs are environment variables on the systemd unit:
 | `OHMYCC_ANTHROPIC_URL`  | `https://api.anthropic.com/v1/messages`  |
 | `OHMYCC_LOG_LEVEL`      | `info`                                   |
 
-Edit `/etc/systemd/system/ohmycc-daemon.service` and run
-`systemctl daemon-reload && systemctl restart ohmycc-daemon`.
+Edit `/etc/systemd/system/ohmyclawd-daemon.service` and run
+`systemctl daemon-reload && systemctl restart ohmyclawd-daemon`.
 
 ## Endpoints
 
@@ -39,7 +39,7 @@ Edit `/etc/systemd/system/ohmycc-daemon.service` and run
 ## Fake mode
 
 ```bash
-ohmycc-daemon --fake
+ohmyclawd-daemon --fake
 ```
 
 Skips Anthropic calls and serves a scripted utilization curve. Useful for
