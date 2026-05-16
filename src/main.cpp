@@ -153,7 +153,12 @@ void loop() {
 void nextMode() { currentMode = (currentMode + 1) % 2; modeChanged = true; modeTimer = millis(); tft.fillScreen(TFT_BLACK); }
 
 void runSprite() {
-  if (modeChanged) { tft.fillScreen(TFT_BLACK); spriteAnim = random(SPRITE_ANIM_COUNT); spriteFrame = 0; modeChanged = false;
+  if (modeChanged) { tft.fillScreen(TFT_BLACK); spriteFrame = 0; modeChanged = false;
+    // Pick sprite based on status: limited=sleep(2), high=work-think(8), mid=work-coding(12), low=random dance
+    if (usageSession >= 80) spriteAnim = 2;       // expression-sleep (rate limited territory)
+    else if (usageSession >= 50) spriteAnim = 8;  // work-think
+    else if (usageSession >= 25) spriteAnim = 12; // work-coding
+    else spriteAnim = random(2);                  // dance-bounce(0) or dance-sway(1)
     tft.setTextSize(2); tft.setTextColor(TFT_ORANGE, TFT_BLACK); tft.drawCentreString("OHMYCLAWD", 120, 5, 1);
     tft.setTextSize(1); tft.setTextColor(TFT_DARKGREY, TFT_BLACK); tft.drawCentreString("v" VERSION, 120, 22, 1);
   }
