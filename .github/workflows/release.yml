@@ -40,8 +40,37 @@ jobs:
           name: ohmyclawd-daemon-linux-amd64
           path: ohmyclawd-daemon-linux-amd64
 
+  firmware:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-${{ hashFiles('platformio.ini') }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: install platformio
+        run: pip install platformio
+
+      - name: build firmware
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          sed -i "s/-DVERSION=\\\\\"0.1.0\\\\\"/-DVERSION=\\\\\"${VERSION}\\\\\"/" platformio.ini
+          pio run -e cyd
+          cp .pio/build/cyd/firmware.bin ohmyclawd-firmware.bin
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ohmyclawd-firmware
+          path: ohmyclawd-firmware.bin
+
   publish:
-    needs: [daemon-binary]
+    needs: [daemon-binary, firmware]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -50,6 +79,10 @@ jobs:
         with:
           name: ohmyclawd-daemon-linux-amd64
 
+      - uses: actions/download-artifact@v4
+        with:
+          name: ohmyclawd-firmware
+
       - name: create release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -57,4 +90,5 @@ jobs:
           gh release create "${GITHUB_REF_NAME}" \
             --title "ohmyclawd ${GITHUB_REF_NAME}" \
             --generate-notes \
-            ohmyclawd-daemon-linux-amd64
+            ohmyclawd-daemon-linux-amd64 \
+            ohmyclawd-firmware.bin

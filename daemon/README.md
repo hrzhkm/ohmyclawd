@@ -8,11 +8,11 @@ ESP32 firmware polls over LAN.
 ## Install (systemd, recommended)
 
 ```bash
-sudo OHMYCC_USER=youruser ./install.sh
+sudo OHMYCLAWD_USER=youruser ./install.sh
 ```
 
 This builds the static binary, copies it to `/usr/local/bin/ohmyclawd-daemon`,
-installs the systemd unit substituting `OHMYCC_USER=youruser`, and starts the
+installs the systemd unit substituting `OHMYCLAWD_USER=youruser`, and starts the
 service. The daemon runs as `youruser` so it can read `~/.claude/.credentials.json`.
 
 ## Configuration
@@ -21,11 +21,11 @@ All knobs are environment variables on the systemd unit:
 
 | Var                     | Default                                  |
 |-------------------------|------------------------------------------|
-| `OHMYCC_LISTEN`         | `:8787`                                  |
-| `OHMYCC_PROBE_INTERVAL` | `60s`                                    |
-| `OHMYCC_CREDS_PATH`     | `~/.claude/.credentials.json`            |
-| `OHMYCC_ANTHROPIC_URL`  | `https://api.anthropic.com/v1/messages`  |
-| `OHMYCC_LOG_LEVEL`      | `info`                                   |
+| `OHMYCLAWD_LISTEN`         | `:8787`                                  |
+| `OHMYCLAWD_PROBE_INTERVAL` | `60s`                                    |
+| `OHMYCLAWD_CREDS_PATH`     | `~/.claude/.credentials.json`            |
+| `OHMYCLAWD_ANTHROPIC_URL`  | `https://api.anthropic.com/v1/messages`  |
+| `OHMYCLAWD_LOG_LEVEL`      | `info`                                   |
 
 Edit `/etc/systemd/system/ohmyclawd-daemon.service` and run
 `systemctl daemon-reload && systemctl restart ohmyclawd-daemon`.

@@ -87,19 +87,24 @@ tft.invertDisplay(true);   // try false if colors are inverted
 
 The daemon runs on your server, polls the Anthropic API for rate-limit headers, and serves usage data over HTTP.
 
+### Quick Install
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/opariffazman/ohmyclawd/master/install.sh | sudo bash
+```
+
+This downloads the latest binary, installs it to `/usr/local/bin`, and sets up a systemd service running as your user.
+
+### Manual Install
+
 ```bash
 cd daemon
 go build -o ohmyclawd-daemon .
 ./ohmyclawd-daemon
 ```
 
-Or use the install script for systemd:
+### Environment Variables
 
-```bash
-cd daemon && ./install.sh
-```
-
-Environment variables:
 - `OHMYCLAWD_LISTEN` — listen address (default `:8787`)
 - `OHMYCLAWD_PROBE_INTERVAL` — probe interval (default `60s`)
 - `OHMYCLAWD_CREDS_PATH` — path to Claude credentials (default `~/.claude/.credentials.json`)

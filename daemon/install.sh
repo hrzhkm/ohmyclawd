@@ -6,9 +6,9 @@ if [[ "${EUID}" -ne 0 ]]; then
   exit 1
 fi
 
-TARGET_USER="${OHMYCC_USER:-${SUDO_USER:-}}"
+TARGET_USER="${OHMYCLAWD_USER:-${SUDO_USER:-}}"
 if [[ -z "${TARGET_USER}" ]]; then
-  echo "Set OHMYCC_USER=<user who runs claude code> or invoke via sudo." >&2
+  echo "Set OHMYCLAWD_USER=<user who runs claude code> or invoke via sudo." >&2
   exit 1
 fi
 
@@ -21,7 +21,7 @@ cd "$(dirname "$0")"
 go build -trimpath -ldflags='-s -w' -o ohmyclawd-daemon .
 install -m 0755 ohmyclawd-daemon /usr/local/bin/ohmyclawd-daemon
 
-sed "s|__OHMYCC_USER__|${TARGET_USER}|g" systemd/ohmyclawd-daemon.service \
+sed "s|__USER__|${TARGET_USER}|g" systemd/ohmyclawd-daemon.service \
   > /etc/systemd/system/ohmyclawd-daemon.service
 
 systemctl daemon-reload

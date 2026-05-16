@@ -5,6 +5,8 @@
 #include <XPT2046_Touchscreen.h>
 #include <WiFiManager.h>
 #include <Preferences.h>
+#include <Update.h>
+#include <WiFiClientSecure.h>
 #include "time.h"
 #include "sprite_frames.h"
 
@@ -60,6 +62,7 @@ void nextMode();
 void runSprite();
 void runClock();
 void fetchUsage();
+void checkOTA();
 
 void setup() {
   tft.init();
@@ -119,7 +122,9 @@ void setup() {
   tft.fillScreen(TFT_ORANGE); tft.setTextColor(TFT_BLACK);
   tft.setTextSize(3); tft.drawCentreString("CONNECTED!", 120, 160, 1);
   configTime(3600, 3600, "pool.ntp.org");
-  delay(1000); tft.fillScreen(TFT_BLACK);
+  delay(1000);
+  checkOTA();
+  tft.fillScreen(TFT_BLACK);
   modeTimer = millis();
 }
 
@@ -251,5 +256,123 @@ void runClock() {
     for (int i = 0; i < numCells; i++)
       tft.fillRect(barX + i * 8, barY, 7, 7, (i <= filled) ? TFT_ORANGE : TFT_DARKGREY);
     lsec = ti.tm_sec;
+  }
+}
+
+void checkOTA() {
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextSize(1); tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
+  tft.drawCentreString("checking for updates...", 120, 155, 1);
+
+  WiFiClientSecure client;
+  client.setInsecure(); // GitHub API, skip cert verification
+  HTTPClient http;
+  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
+  http.begin(client, "https://api.github.com/repos/opariffazman/ohmyclawd/releases/latest");
+  http.addHeader("User-Agent", "OhMyClawd-ESP32");
+  int code = http.GET();
+  if (code != 200) { http.end(); return; }
+
+  JsonDocument doc;
+  deserializeJson(doc, http.getString());
+  http.end();
+
+  String tag = doc["tag_name"] | "";
+  if (tag.startsWith("v")) tag = tag.substring(1);
+  String current = VERSION;
+  if (tag.length() == 0 || tag == current) return;
+
+  // Find firmware asset URL
+  String assetUrl = "";
+  for (JsonObject asset : doc["assets"].as<JsonArray>()) {
+    String name = asset["name"] | "";
+    if (name == "ohmyclawd-firmware.bin") {
+      assetUrl = asset["browser_download_url"].as<String>();
+      break;
+    }
+  }
+  if (assetUrl.length() == 0) return;
+
+  // Show update prompt
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextSize(2); tft.setTextColor(TFT_ORANGE, TFT_BLACK);
+  tft.drawCentreString("UPDATE", 120, 40, 1);
+  tft.setTextSize(1); tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
+  tft.drawCentreString("v" + current + " -> v" + tag, 120, 70, 1);
+  // YES button
+  tft.fillRect(30, 120, 80, 50, TFT_ORANGE);
+  tft.setTextSize(2); tft.setTextColor(TFT_BLACK);
+  tft.drawCentreString("YES", 70, 135, 1);
+  // NO button
+  tft.fillRect(130, 120, 80, 50, TFT_DARKGREY);
+  tft.setTextColor(TFT_WHITE);
+  tft.drawCentreString("NO", 170, 135, 1);
+
+  // Wait for touch
+  unsigned long timeout = millis() + 15000;
+  bool accepted = false;
+  while (millis() < timeout) {
+    if (ts.touched()) {
+      TS_Point p = ts.getPoint();
+      // Map touch coordinates (XPT2046 raw: ~300-3900)
+      int tx = map(p.x, 300, 3900, 0, 240);
+      int ty = map(p.y, 300, 3900, 0, 320);
+      if (ty >= 120 && ty <= 170) {
+        if (tx >= 30 && tx <= 110) { accepted = true; break; }
+        if (tx >= 130 && tx <= 210) { return; }
+      }
+      delay(200);
+    }
+    delay(50);
+  }
+  if (!accepted) return;
+
+  // Download and flash
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextSize(2); tft.setTextColor(TFT_ORANGE, TFT_BLACK);
+  tft.drawCentreString("UPDATING", 120, 40, 1);
+  tft.setTextSize(1); tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
+  tft.drawCentreString("do not power off", 120, 65, 1);
+
+  // Progress bar params
+  int barX = (240 - BANNER_W * 8) / 2;
+  int barY = 150;
+  int numCells = BANNER_W;
+
+  http.begin(client, assetUrl);
+  http.addHeader("User-Agent", "OhMyClawd-ESP32");
+  code = http.GET();
+  if (code != 200) { http.end(); return; }
+
+  int contentLen = http.getSize();
+  WiFiClient* stream = http.getStreamPtr();
+
+  if (!Update.begin(contentLen)) { http.end(); return; }
+
+  uint8_t buf[1024];
+  int written = 0;
+  while (written < contentLen) {
+    int avail = stream->available();
+    if (avail) {
+      int read = stream->readBytes(buf, min((int)sizeof(buf), avail));
+      Update.write(buf, read);
+      written += read;
+      // Update progress bar
+      int filled = (written * numCells) / contentLen;
+      for (int i = 0; i < numCells; i++)
+        tft.fillRect(barX + i * 8, barY, 7, 7, (i <= filled) ? TFT_ORANGE : TFT_DARKGREY);
+    }
+    delay(1);
+  }
+
+  http.end();
+  if (Update.end(true)) {
+    tft.fillScreen(TFT_BLACK);
+    tft.setTextSize(2); tft.setTextColor(TFT_ORANGE, TFT_BLACK);
+    tft.drawCentreString("DONE!", 120, 150, 1);
+    tft.setTextSize(1); tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
+    tft.drawCentreString("rebooting...", 120, 180, 1);
+    delay(2000);
+    ESP.restart();
   }
 }

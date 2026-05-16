@@ -13,10 +13,10 @@ import (
 )
 
 func main() {
-	listen := getenv("OHMYCC_LISTEN", ":8787")
-	probeInterval := getenvDur("OHMYCC_PROBE_INTERVAL", 60*time.Second)
-	credsPath := getenv("OHMYCC_CREDS_PATH", defaultCredsPath())
-	anthropicURL := getenv("OHMYCC_ANTHROPIC_URL", "https://api.anthropic.com/v1/messages")
+	listen := getenv("OHMYCLAWD_LISTEN", ":8787")
+	probeInterval := getenvDur("OHMYCLAWD_PROBE_INTERVAL", 60*time.Second)
+	credsPath := getenv("OHMYCLAWD_CREDS_PATH", defaultCredsPath())
+	anthropicURL := getenv("OHMYCLAWD_ANTHROPIC_URL", "https://api.anthropic.com/v1/messages")
 	fakeMode := flag.Bool("fake", false, "serve a scripted Usage curve, no Anthropic calls")
 	flag.Parse()
 
