@@ -227,6 +227,16 @@ void fetchUsage() {
     usageSR = doc["sr"] | 0;
     usageWR = doc["wr"] | 0;
     claudeWaiting = doc["cw"] | 0;
+    // Update sprite based on new status
+    if (currentMode == 0) {
+      uint8_t newAnim;
+      if (claudeWaiting > 0) newAnim = 3;
+      else if (usageSession >= 80) newAnim = 2;
+      else if (usageSession >= 50) newAnim = 8;
+      else if (usageSession >= 25) newAnim = 12;
+      else newAnim = spriteAnim < 2 ? spriteAnim : random(2);
+      if (newAnim != spriteAnim) { spriteAnim = newAnim; spriteFrame = 0; }
+    }
   }
   http.end();
 }
