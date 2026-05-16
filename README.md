@@ -19,7 +19,7 @@ Claude Code usage monitor on the ESP32-2432S028R (CYD 2.8") with pixel art anima
 ![ohmyclawd1](ohmyclawd1.jpeg)
 ![ohmyclawd2](ohmyclawd2.jpeg)
 
-Displays real-time Claude Code session and weekly usage from an [ohmycc](https://github.com/ArifArman/ohmycc) daemon, with animated pixel sprites and a digital clock.
+Displays real-time Claude Code session and weekly usage with animated pixel sprites and a digital clock.
 
 ## Modes
 
@@ -50,7 +50,7 @@ On first boot (or after a 5-second touch reset), the CYD creates an access point
 
 1. Connect to WiFi network **`OhMyClawd`**
 2. A captive portal opens (or browse to `192.168.4.1`)
-3. Enter your WiFi SSID, password, and ohmycc daemon URL
+3. Enter your WiFi SSID, password, and daemon URL
 4. Default daemon URL: `http://ohmyclawd.local:8787`
 5. The CYD reboots and connects to your network
 
@@ -111,4 +111,3 @@ Test with fake data: `./ohmyclawd-daemon --fake`
 ## Credits
 
 - Pixel animations from [claudepix](https://claudepix.vercel.app/) by [Kevin Lynagh](https://github.com/lynaghk)
-- Usage daemon from [ohmycc](https://github.com/ArifArman/ohmycc)
