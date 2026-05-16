@@ -1,0 +1,23 @@
+[Unit]
+Description=ohmycc daemon — probes Anthropic for Claude Code utilization
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/ohmycc-daemon
+Restart=always
+RestartSec=5
+User=__OHMYCC_USER__
+Group=__OHMYCC_USER__
+Environment=OHMYCC_LISTEN=:8787
+Environment=OHMYCC_PROBE_INTERVAL=60s
+# OHMYCC_CREDS_PATH defaults to ~/.claude/.credentials.json under the target user.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=
+
+[Install]
+WantedBy=multi-user.target

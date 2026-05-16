@@ -1,0 +1,8 @@
+{
+  "claudeAiOauth": {
+    "accessToken": "sk-ant-oat01-VALIDTOKEN",
+    "refreshToken": "sk-ant-ort01-VALIDREFRESH",
+    "expiresAt": 9999999999000,
+    "scopes": ["user:profile"]
+  }
+}
