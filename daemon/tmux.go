@@ -106,10 +106,14 @@ func (tw *TmuxWatcher) paneHash(paneID string) string {
 		return ""
 	}
 	content := string(out)
-	// Check if Claude is actively working (pending tasks, in-progress indicators)
-	if strings.Contains(content, "pending") ||
-		strings.Contains(content, "◼") ||
-		strings.Contains(content, "✢") {
+	// Check if Claude is actively working:
+	// - ◼ = task in progress in task list
+	// - ✢ = actively thinking/working spinner
+	// - "N pending" pattern (digit + pending) = queued tasks
+	if strings.Contains(content, "◼") ||
+		strings.Contains(content, "✢") ||
+		strings.Contains(content, " pending,") ||
+		strings.Contains(content, " pending)") {
 		return fmt.Sprintf("active-%d", time.Now().UnixNano())
 	}
 	// Hash last 10 lines for idle detection

@@ -32,6 +32,13 @@ bool modeChanged = true;
 uint8_t spriteFrame = 0;
 uint8_t spriteAnim = 0;
 unsigned long lastSpriteFrame = 0;
+unsigned long lastWordChange = 0;
+uint8_t wordIdx = 0;
+const char* funWords[] = {
+  "thinking...", "cogitating...", "pondering...", "vibing...",
+  "brewing ideas...", "crunching...", "scheming...", "crafting...",
+  "conjuring...", "noodling...", "cooking...", "manifesting...",
+};
 int usageSession = 0;
 int usageWeekly = 0;
 int usageSR = 0;
@@ -180,6 +187,30 @@ void runSprite() {
     }
   }
   spriteFrame = (spriteFrame + 1) % count;
+  // Fun status word above sprite with pulsing block
+  if (millis() - lastWordChange > 5000) {
+    lastWordChange = millis();
+    wordIdx = random(12);
+  }
+  // Fun status word with pulsing block (only when active)
+  int wordY = 35;
+  if (claudeWaiting == 0 && usageSession > 0) {
+    if (millis() - lastWordChange > 5000) {
+      lastWordChange = millis();
+      wordIdx = random(12);
+    }
+    tft.fillRect(0, wordY, 240, 10, TFT_BLACK);
+    tft.setTextSize(1); tft.setTextColor(TFT_ORANGE, TFT_BLACK);
+    tft.setTextDatum(MC_DATUM);
+    tft.drawString(funWords[wordIdx], 124, wordY + 4, 1);
+    int textW = strlen(funWords[wordIdx]) * 6;
+    int blockX = 124 - textW / 2 - 10;
+    uint16_t blockColor = ((millis() / 500) % 2) ? TFT_ORANGE : TFT_BLACK;
+    tft.fillRect(blockX, wordY + 1, 6, 6, blockColor);
+    tft.setTextDatum(TL_DATUM);
+  } else {
+    tft.fillRect(0, wordY, 240, 10, TFT_BLACK);
+  }
   // Usage bars
   int barY = yOff + SPRITE_H * cell + 10;
   int numCells = 20;
