@@ -57,7 +57,7 @@ Group=${TARGET_USER}
 Environment=OHMYCLAWD_LISTEN=:8787
 Environment=OHMYCLAWD_PROBE_INTERVAL=60s
 NoNewPrivileges=true
-PrivateTmp=true
+PrivateTmp=false
 ProtectSystem=strict
 ProtectHome=read-only
 

@@ -14,7 +14,7 @@ Environment=OHMYCLAWD_LISTEN=:8787
 Environment=OHMYCLAWD_PROBE_INTERVAL=60s
 # OHMYCLAWD_CREDS_PATH defaults to ~/.claude/.credentials.json under the target user.
 NoNewPrivileges=true
-PrivateTmp=true
+PrivateTmp=false
 ProtectSystem=strict
 ProtectHome=read-only
 ReadWritePaths=
