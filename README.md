@@ -85,9 +85,9 @@ tft.invertDisplay(true);   // try false if colors are inverted
 
 ## Daemon
 
-The daemon runs on your server, polls the Anthropic API for rate-limit headers, and serves usage data over HTTP.
+The daemon runs on your machine, polls the Anthropic API for rate-limit headers, and serves usage data over HTTP.
 
-### Quick Install
+### Quick Install (Linux)
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/opariffazman/ohmyclawd/master/install.sh | sudo bash
@@ -97,10 +97,22 @@ This downloads the latest binary, installs it to `/usr/local/bin`, and sets up a
 
 ### Manual Install
 
+Download the binary for your platform from [Releases](https://github.com/opariffazman/ohmyclawd/releases):
+
+| Platform | Binary |
+|----------|--------|
+| Linux x64 | `ohmyclawd-daemon-linux-amd64` |
+| macOS x64 | `ohmyclawd-daemon-darwin-amd64` |
+| macOS ARM | `ohmyclawd-daemon-darwin-arm64` |
+| Windows x64 | `ohmyclawd-daemon-windows-amd64.exe` |
+
 ```bash
-cd daemon
-go build -o ohmyclawd-daemon .
-./ohmyclawd-daemon
+# Linux/macOS
+chmod +x ohmyclawd-daemon-*
+./ohmyclawd-daemon-linux-amd64
+
+# Windows
+ohmyclawd-daemon-windows-amd64.exe
 ```
 
 ### Environment Variables

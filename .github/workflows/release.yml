@@ -11,6 +11,21 @@ permissions:
 jobs:
   daemon-binary:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+            suffix: linux-amd64
+          - goos: darwin
+            goarch: amd64
+            suffix: darwin-amd64
+          - goos: darwin
+            goarch: arm64
+            suffix: darwin-arm64
+          - goos: windows
+            goarch: amd64
+            suffix: windows-amd64.exe
     defaults:
       run:
         working-directory: daemon
@@ -22,23 +37,24 @@ jobs:
           go-version-file: daemon/go.mod
           cache: false
 
-      - name: test before release
+      - name: test
+        if: matrix.goos == 'linux'
         run: go test -race -count=1 ./...
 
-      - name: build linux/amd64
+      - name: build
         env:
-          GOOS: linux
-          GOARCH: amd64
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: 0
         run: |
           go build -trimpath \
             -ldflags="-s -w -X main.version=${GITHUB_REF_NAME}" \
-            -o ../ohmyclawd-daemon-linux-amd64 .
+            -o ../ohmyclawd-daemon-${{ matrix.suffix }} .
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ohmyclawd-daemon-linux-amd64
-          path: ohmyclawd-daemon-linux-amd64
+          name: ohmyclawd-daemon-${{ matrix.suffix }}
+          path: ohmyclawd-daemon-${{ matrix.suffix }}
 
   firmware:
     runs-on: ubuntu-latest
@@ -77,11 +93,7 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: ohmyclawd-daemon-linux-amd64
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: ohmyclawd-firmware
+          merge-multiple: true
 
       - name: create release
         env:
@@ -91,4 +103,7 @@ jobs:
             --title "ohmyclawd ${GITHUB_REF_NAME}" \
             --generate-notes \
             ohmyclawd-daemon-linux-amd64 \
+            ohmyclawd-daemon-darwin-amd64 \
+            ohmyclawd-daemon-darwin-arm64 \
+            ohmyclawd-daemon-windows-amd64.exe \
             ohmyclawd-firmware.bin
