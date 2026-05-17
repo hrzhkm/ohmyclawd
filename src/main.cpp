@@ -69,6 +69,7 @@ static const uint8_t banner_clawd[BANNER_H][BANNER_W] PROGMEM = {
 void nextMode();
 void runSprite();
 void runClock();
+void runSystem();
 void fetchUsage();
 void checkOTA();
 
@@ -163,10 +164,11 @@ void loop() {
   switch (currentMode) {
     case 0: runSprite(); break;
     case 1: runClock(); break;
+    case 2: runSystem(); break;
   }
 }
 
-void nextMode() { currentMode = (currentMode + 1) % 2; modeChanged = true; modeTimer = millis(); tft.fillScreen(TFT_BLACK); }
+void nextMode() { currentMode = (currentMode + 1) % 3; modeChanged = true; modeTimer = millis(); tft.fillScreen(TFT_BLACK); }
 
 void runSprite() {
   if (modeChanged) { tft.fillScreen(TFT_BLACK); spriteFrame = 0; modeChanged = false;
@@ -337,6 +339,95 @@ void runClock() {
       tft.fillRect(barX + i * 8, barY, 7, 7, (i <= filled) ? TFT_ORANGE : TFT_DARKGREY);
     lsec = ti.tm_sec;
   }
+}
+
+void runSystem() {
+  if (!modeChanged) return;
+  modeChanged = false;
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextSize(2); tft.setTextColor(TFT_ORANGE, TFT_BLACK);
+  tft.drawCentreString("OHMYCLAWD", 120, 5, 1);
+  tft.setTextSize(1); tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
+  tft.drawCentreString("SYSTEM", 120, 22, 1);
+
+  int y = 45;
+  int labelX = 5, valX = 70, gap = 18;
+
+  // Chip info
+  tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
+  tft.drawString("CHIP", labelX, y, 1);
+  tft.setTextColor(TFT_ORANGE, TFT_BLACK);
+  String chip = String(ESP.getChipModel()) + " Rev" + String(ESP.getChipRevision()) + " " + String(ESP.getChipCores()) + "c";
+  tft.drawString(chip, valX, y, 1); y += gap;
+
+  // CPU
+  tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
+  tft.drawString("CPU", labelX, y, 1);
+  tft.setTextColor(TFT_ORANGE, TFT_BLACK);
+  tft.drawString(String(ESP.getCpuFreqMHz()) + "MHz", valX, y, 1); y += gap;
+
+  // SDK
+  tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
+  tft.drawString("SDK", labelX, y, 1);
+  tft.setTextColor(TFT_ORANGE, TFT_BLACK);
+  tft.drawString(ESP.getSdkVersion(), valX, y, 1); y += gap;
+
+  // Flash
+  tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
+  tft.drawString("FLASH", labelX, y, 1);
+  tft.setTextColor(TFT_ORANGE, TFT_BLACK);
+  tft.drawString(String(ESP.getFlashChipSize() / 1024 / 1024) + "MB @ " + String(ESP.getFlashChipSpeed() / 1000000) + "MHz", valX, y, 1); y += gap;
+
+  // Heap
+  tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
+  tft.drawString("HEAP", labelX, y, 1);
+  tft.setTextColor(TFT_ORANGE, TFT_BLACK);
+  tft.drawString(String(ESP.getFreeHeap() / 1024) + "KB / " + String(ESP.getHeapSize() / 1024) + "KB", valX, y, 1); y += gap;
+
+  // Panel
+  tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
+  tft.drawString("PANEL", labelX, y, 1);
+  tft.setTextColor(TFT_ORANGE, TFT_BLACK);
+  tft.drawString("ILI9341 240x320", valX, y, 1); y += gap;
+
+  // Touch
+  tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
+  tft.drawString("TOUCH", labelX, y, 1);
+  tft.setTextColor(TFT_ORANGE, TFT_BLACK);
+  tft.drawString("XPT2046", valX, y, 1); y += gap;
+
+  // WiFi signal with grid bar
+  tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
+  tft.drawString("WIFI", labelX, y, 1);
+  int32_t rssi = WiFi.RSSI();
+  int bars = (rssi > -50) ? 5 : (rssi > -60) ? 4 : (rssi > -70) ? 3 : (rssi > -80) ? 2 : 1;
+  for (int i = 0; i < 5; i++)
+    tft.fillRect(valX + i * 8, y, 6, 6, (i < bars) ? TFT_ORANGE : TFT_DARKGREY);
+  tft.setTextColor(TFT_ORANGE, TFT_BLACK);
+  tft.drawString(String(rssi) + "dBm", valX + 48, y, 1); y += gap;
+
+  // IP
+  tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
+  tft.drawString("IP", labelX, y, 1);
+  tft.setTextColor(TFT_ORANGE, TFT_BLACK);
+  tft.drawString(WiFi.localIP().toString(), valX, y, 1); y += gap;
+
+  // Uptime
+  tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
+  tft.drawString("UP", labelX, y, 1);
+  tft.setTextColor(TFT_ORANGE, TFT_BLACK);
+  unsigned long sec = millis() / 1000;
+  int d = sec / 86400, h = (sec % 86400) / 3600, m = (sec % 3600) / 60;
+  String up = "";
+  if (d > 0) up += String(d) + "d ";
+  up += String(h) + "h " + String(m) + "m";
+  tft.drawString(up, valX, y, 1); y += gap;
+
+  // Firmware
+  tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
+  tft.drawString("FW", labelX, y, 1);
+  tft.setTextColor(TFT_ORANGE, TFT_BLACK);
+  tft.drawString("v" VERSION, valX, y, 1);
 }
 
 void checkOTA() {
