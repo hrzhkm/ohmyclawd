@@ -124,21 +124,9 @@ curl -fsSL https://raw.githubusercontent.com/opariffazman/ohmyclawd/master/insta
 
 ## Daemon
 
-### Environment Variables
+The daemon runs on your machine (where Claude Code runs), polls the Anthropic API for rate-limit headers, and serves usage data over HTTP.
 
-- `OHMYCLAWD_LISTEN` — listen address (default `:8787`)
-- `OHMYCLAWD_PROBE_INTERVAL` — probe interval (default `60s`)
-- `OHMYCLAWD_CREDS_PATH` — path to Claude credentials (default `~/.claude/.credentials.json`)
-
-Test with fake data: `./ohmyclawd-daemon --fake`
-
-### Display Color Fix
-
-Some CYD units have inverted panels. Toggle in `setup()`:
-
-```cpp
-tft.invertDisplay(true);   // try false if colors are inverted
-```
+See [daemon/README.md](daemon/README.md) for full setup instructions, environment variables, and platform downloads.
 
 ## Project Structure
 
