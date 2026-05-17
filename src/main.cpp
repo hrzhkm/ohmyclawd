@@ -32,6 +32,8 @@ bool modeChanged = true;
 uint8_t spriteFrame = 0;
 uint8_t spriteAnim = 0;
 unsigned long lastSpriteFrame = 0;
+unsigned long lastTapTime = 0;
+bool dynamicSprite = true;
 unsigned long lastWordChange = 0;
 uint8_t wordIdx = 0;
 const char* funWords[] = {
@@ -147,16 +149,70 @@ void setup() {
 
 void loop() {
   if (ts.touched()) {
+    TS_Point p = ts.getPoint();
+    int startX = map(p.x, 300, 3900, 0, 240);
+    int lastX = startX;
     unsigned long touchStart = millis();
-    while (ts.touched() && (millis() - touchStart < 5000)) delay(50);
-    if (millis() - touchStart >= 5000) {
-      // 5s hold: reset WiFi and reboot
-      WiFiManager wm;
-      wm.resetSettings();
-      prefs.begin("ohmyclawd", false); prefs.clear(); prefs.end();
-      ESP.restart();
+    while (ts.touched()) {
+      if (millis() - touchStart >= 5000) {
+        WiFiManager wm;
+        wm.resetSettings();
+        prefs.begin("ohmyclawd", false); prefs.clear(); prefs.end();
+        ESP.restart();
+      }
+      p = ts.getPoint();
+      lastX = map(p.x, 300, 3900, 0, 240);
+      delay(20);
     }
-    isAutoCycle = false; nextMode(); delay(400);
+    unsigned long elapsed = millis() - touchStart;
+    int deltaX = lastX - startX;
+    if (elapsed < 500 && abs(deltaX) > 40) {
+      // Swipe
+      isAutoCycle = false;
+      if (deltaX > 0) { currentMode = (currentMode + 2) % 3; } // swipe right = prev
+      else { currentMode = (currentMode + 1) % 3; }            // swipe left = next
+      modeChanged = true; modeTimer = millis(); tft.fillScreen(TFT_BLACK);
+    } else if (elapsed < 300 && abs(deltaX) < 20) {
+      // Tap on sprite mode
+      if (currentMode == 0) {
+        if (millis() - lastTapTime < 400) {
+          // Double tap: toggle dynamic mode
+          dynamicSprite = !dynamicSprite;
+          lastTapTime = 0;
+          // Flash message in fun word area
+          tft.fillRect(0, 35, 240, 10, TFT_BLACK);
+          tft.setTextSize(1); tft.setTextColor(TFT_ORANGE, TFT_BLACK);
+          tft.setTextDatum(MC_DATUM);
+          tft.drawString(dynamicSprite ? "dynamic mode" : "free mode", 120, 39, 1);
+          tft.setTextDatum(TL_DATUM);
+        } else {
+          // Single tap: cycle sprite
+          lastTapTime = millis();
+          if (dynamicSprite) {
+            // Cycle within current state pool
+            static const uint8_t waitPool[] = {3, 4};
+            static const uint8_t limitPool[] = {2, 6};
+            static const uint8_t heavyPool[] = {8, 7};
+            static const uint8_t modPool[] = {12, 11};
+            static const uint8_t lightPool[] = {0, 1, 9, 10, 5};
+            const uint8_t* pool; uint8_t poolSize;
+            if (claudeWaiting > 0) { pool = waitPool; poolSize = 2; }
+            else if (usageSession >= 80) { pool = limitPool; poolSize = 2; }
+            else if (usageSession >= 50) { pool = heavyPool; poolSize = 2; }
+            else if (usageSession >= 25) { pool = modPool; poolSize = 2; }
+            else { pool = lightPool; poolSize = 5; }
+            uint8_t idx = 0;
+            for (uint8_t i = 0; i < poolSize; i++) { if (pool[i] == spriteAnim) { idx = i; break; } }
+            spriteAnim = pool[(idx + 1) % poolSize];
+          } else {
+            // Free cycle through all sprites
+            spriteAnim = (spriteAnim + 1) % SPRITE_ANIM_COUNT;
+          }
+          spriteFrame = 0;
+        }
+      }
+    }
+    delay(200);
   }
   if (isAutoCycle && (millis() - modeTimer > interval)) nextMode();
   if (millis() - lastUsageFetch > 30000 || lastUsageFetch == 0) { fetchUsage(); lastUsageFetch = millis(); }
@@ -286,7 +342,7 @@ void fetchUsage() {
     usageWR = doc["wr"] | 0;
     claudeWaiting = doc["cw"] | 0;
     // Update sprite based on new status
-    if (currentMode == 0) {
+    if (currentMode == 0 && dynamicSprite) {
       uint8_t newAnim;
       static const uint8_t waitP[] = {3, 4};
       static const uint8_t limitP[] = {2, 6};
