@@ -99,9 +99,10 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          TAG_MSG=$(git tag -l --format='%(contents)' "${GITHUB_REF_NAME}" | head -20)
           gh release create "${GITHUB_REF_NAME}" \
             --title "ohmyclawd ${GITHUB_REF_NAME}" \
-            --generate-notes \
+            --notes "${TAG_MSG}" \
             ohmyclawd-daemon-linux-amd64 \
             ohmyclawd-daemon-darwin-amd64 \
             ohmyclawd-daemon-darwin-arm64 \
