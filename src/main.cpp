@@ -351,83 +351,55 @@ void runSystem() {
   tft.drawCentreString("SYSTEM", 120, 22, 1);
 
   int y = 45;
-  int labelX = 5, valX = 70, gap = 18;
+  int labelX = 15, valX = 225, gap = 20;
 
-  // Chip info
-  tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
-  tft.drawString("CHIP", labelX, y, 1);
-  tft.setTextColor(TFT_ORANGE, TFT_BLACK);
-  String chip = String(ESP.getChipModel()) + " Rev" + String(ESP.getChipRevision()) + " " + String(ESP.getChipCores()) + "c";
-  tft.drawString(chip, valX, y, 1); y += gap;
+  auto drawRow = [&](const char* label, String value) {
+    tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
+    tft.setTextDatum(TL_DATUM);
+    tft.drawString(label, labelX, y, 1);
+    tft.setTextColor(TFT_ORANGE, TFT_BLACK);
+    tft.setTextDatum(TR_DATUM);
+    tft.drawString(value, valX, y, 1);
+    y += 10;
+    tft.drawFastHLine(labelX, y, valX - labelX, TFT_DARKGREY);
+    y += gap - 10;
+  };
 
-  // CPU
-  tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
-  tft.drawString("CPU", labelX, y, 1);
-  tft.setTextColor(TFT_ORANGE, TFT_BLACK);
-  tft.drawString(String(ESP.getCpuFreqMHz()) + "MHz", valX, y, 1); y += gap;
+  drawRow("CHIP", String(ESP.getChipModel()) + " Rev" + String(ESP.getChipRevision()) + " " + String(ESP.getChipCores()) + "c");
+  drawRow("CPU", String(ESP.getCpuFreqMHz()) + "MHz");
+  drawRow("SDK", ESP.getSdkVersion());
+  drawRow("FLASH", String(ESP.getFlashChipSize() / 1024 / 1024) + "MB @ " + String(ESP.getFlashChipSpeed() / 1000000) + "MHz");
+  drawRow("HEAP", String(ESP.getFreeHeap() / 1024) + "KB / " + String(ESP.getHeapSize() / 1024) + "KB");
+  drawRow("PANEL", "ILI9341 240x320");
+  drawRow("TOUCH", "XPT2046");
 
-  // SDK
+  // WiFi row with grid bar
   tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
-  tft.drawString("SDK", labelX, y, 1);
-  tft.setTextColor(TFT_ORANGE, TFT_BLACK);
-  tft.drawString(ESP.getSdkVersion(), valX, y, 1); y += gap;
-
-  // Flash
-  tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
-  tft.drawString("FLASH", labelX, y, 1);
-  tft.setTextColor(TFT_ORANGE, TFT_BLACK);
-  tft.drawString(String(ESP.getFlashChipSize() / 1024 / 1024) + "MB @ " + String(ESP.getFlashChipSpeed() / 1000000) + "MHz", valX, y, 1); y += gap;
-
-  // Heap
-  tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
-  tft.drawString("HEAP", labelX, y, 1);
-  tft.setTextColor(TFT_ORANGE, TFT_BLACK);
-  tft.drawString(String(ESP.getFreeHeap() / 1024) + "KB / " + String(ESP.getHeapSize() / 1024) + "KB", valX, y, 1); y += gap;
-
-  // Panel
-  tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
-  tft.drawString("PANEL", labelX, y, 1);
-  tft.setTextColor(TFT_ORANGE, TFT_BLACK);
-  tft.drawString("ILI9341 240x320", valX, y, 1); y += gap;
-
-  // Touch
-  tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
-  tft.drawString("TOUCH", labelX, y, 1);
-  tft.setTextColor(TFT_ORANGE, TFT_BLACK);
-  tft.drawString("XPT2046", valX, y, 1); y += gap;
-
-  // WiFi signal with grid bar
-  tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
+  tft.setTextDatum(TL_DATUM);
   tft.drawString("WIFI", labelX, y, 1);
   int32_t rssi = WiFi.RSSI();
   int bars = (rssi > -50) ? 5 : (rssi > -60) ? 4 : (rssi > -70) ? 3 : (rssi > -80) ? 2 : 1;
   for (int i = 0; i < 5; i++)
-    tft.fillRect(valX + i * 8, y, 6, 6, (i < bars) ? TFT_ORANGE : TFT_DARKGREY);
+    tft.fillRect(130 + i * 8, y, 6, 6, (i < bars) ? TFT_ORANGE : TFT_DARKGREY);
   tft.setTextColor(TFT_ORANGE, TFT_BLACK);
-  tft.drawString(String(rssi) + "dBm", valX + 48, y, 1); y += gap;
+  tft.setTextDatum(TR_DATUM);
+  tft.drawString(String(rssi) + "dBm", valX, y, 1);
+  y += 10; tft.drawFastHLine(labelX, y, valX - labelX, TFT_DARKGREY); y += gap - 10;
 
-  // IP
-  tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
-  tft.drawString("IP", labelX, y, 1);
-  tft.setTextColor(TFT_ORANGE, TFT_BLACK);
-  tft.drawString(WiFi.localIP().toString(), valX, y, 1); y += gap;
+  drawRow("IP", WiFi.localIP().toString());
 
   // Uptime
-  tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
-  tft.drawString("UP", labelX, y, 1);
-  tft.setTextColor(TFT_ORANGE, TFT_BLACK);
   unsigned long sec = millis() / 1000;
   int d = sec / 86400, h = (sec % 86400) / 3600, m = (sec % 3600) / 60;
   String up = "";
   if (d > 0) up += String(d) + "d ";
   up += String(h) + "h " + String(m) + "m";
-  tft.drawString(up, valX, y, 1); y += gap;
+  drawRow("UP", up);
 
-  // Firmware
-  tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
-  tft.drawString("FW", labelX, y, 1);
-  tft.setTextColor(TFT_ORANGE, TFT_BLACK);
-  tft.drawString("v" VERSION, valX, y, 1);
+  drawRow("FW", "v" VERSION);
+  drawRow("BY", "opariffazman");
+  drawRow("GH", "opariffazman/ohmyclawd");
+  tft.setTextDatum(TL_DATUM);
 }
 
 void checkOTA() {
