@@ -86,6 +86,8 @@ inline void handleTap(TFT_eSPI& tft, int touchY) {
 
   switch (row) {
     case 0: {
+      if (sub == EDIT_QH_START) { sub = EDIT_QH_END; subEnteredMs = millis(); needsFullRedraw = true; rowsDirty = true; }
+      else if (sub == EDIT_QH_END) { sub = BROWSE; needsFullRedraw = true; rowsDirty = true; }
       display_pm::setBrightness((display_pm::briLevel + 1) % 3);
       flashRow(tft, 0, "BRIGHTNESS", String(briLabel()));
       needsFullRedraw = true;
@@ -113,6 +115,8 @@ inline void handleTap(TFT_eSPI& tft, int touchY) {
       break;
     }
     case 2: {
+      if (sub == EDIT_QH_START) { sub = EDIT_QH_END; subEnteredMs = millis(); needsFullRedraw = true; rowsDirty = true; }
+      else if (sub == EDIT_QH_END) { sub = BROWSE; needsFullRedraw = true; rowsDirty = true; }
       display_pm::setQuietHours(display_pm::qhStart, display_pm::qhEnd, (display_pm::qhMode + 1) % 3);
       flashRow(tft, 2, "QUIET MODE", String(qhmLabel()));
       needsFullRedraw = true;
@@ -120,15 +124,20 @@ inline void handleTap(TFT_eSPI& tft, int touchY) {
       break;
     }
     case 3: {
+      if (sub == EDIT_QH_START) { sub = EDIT_QH_END; subEnteredMs = millis(); needsFullRedraw = true; rowsDirty = true; }
+      else if (sub == EDIT_QH_END) { sub = BROWSE; needsFullRedraw = true; rowsDirty = true; }
       display_pm::setCycle((display_pm::cycMode + 1) % 4);
       flashRow(tft, 3, "AUTO-CYCLE", String(cycLabel()));
       needsFullRedraw = true;
       rowsDirty = true;
       break;
     }
-    case 4:
+    case 4: {
+      if (sub == EDIT_QH_START) { sub = EDIT_QH_END; subEnteredMs = millis(); needsFullRedraw = true; rowsDirty = true; }
+      else if (sub == EDIT_QH_END) { sub = BROWSE; needsFullRedraw = true; rowsDirty = true; }
       // Brief tap on RESET = no-op. Only hold triggers (Task 8 handles).
       break;
+    }
   }
 }
 
