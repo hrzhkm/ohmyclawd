@@ -169,7 +169,7 @@ inline void handleHoldTick(TFT_eSPI& tft, int touchY, unsigned long elapsedMs) {
     tft.fillRect(0, y, 240, ROW_H - 1, TFT_BLACK);
     tft.fillRect(0, y, resetFilledPx, ROW_H - 1, TFT_ORANGE);
     tft.setTextSize(1);
-    tft.setTextColor(TFT_WHITE, TFT_BLACK);
+    tft.setTextColor(TFT_BLACK, TFT_ORANGE);
     tft.setTextDatum(TL_DATUM);
     tft.drawString("RESET", LABEL_X, y + 8, 2);
     tft.setTextDatum(TR_DATUM);
@@ -261,7 +261,7 @@ inline void render(TFT_eSPI& tft, bool fullRedraw) {
       tft.fillRect(0, y, 240, ROW_H - 1, TFT_BLACK);
       tft.fillRect(0, y, resetFilledPx, ROW_H - 1, TFT_ORANGE);
       tft.setTextSize(1);
-      tft.setTextColor(TFT_WHITE, TFT_BLACK);
+      tft.setTextColor(TFT_BLACK, TFT_ORANGE);
       tft.setTextDatum(TL_DATUM);
       tft.drawString("RESET", LABEL_X, y + 8, 2);
       tft.setTextDatum(TR_DATUM);
