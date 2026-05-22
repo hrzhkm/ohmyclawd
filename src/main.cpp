@@ -19,7 +19,6 @@
 #define XPT2046_MISO 39
 #define XPT2046_CLK  25
 #define XPT2046_CS   33
-#define BACKLIGHT_PIN 21 
 
 TFT_eSPI tft = TFT_eSPI();
 SPIClass touchSPI = SPIClass(VSPI);
@@ -266,6 +265,7 @@ void runSettings() {
   offline_ind::drawGlyph(tft);
 }
 
+// Auto-cycle intentionally rotates only 0-1-2; SETTINGS (mode 3) is reached by swipe only.
 void nextMode() { currentMode = (currentMode + 1) % 3; modeChanged = true; modeTimer = millis(); tft.fillScreen(TFT_BLACK); }
 
 void runSprite() {

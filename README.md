@@ -96,7 +96,7 @@ On first boot, the CYD creates a WiFi access point:
 5. Set your **Timezone** (default: `UTC-8`, see [POSIX TZ format](https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html))
 6. Save — the CYD reboots and connects
 
-Settings persist across reboots. Hold touch for 5 seconds to reset and reconfigure.
+Settings persist across reboots. Hold touch for 5 seconds to reset and reconfigure (or use the RESET row in SETTINGS for a 3-second hold).
 
 ### 4. Done!
 
@@ -121,7 +121,7 @@ Swipe through modes until you reach **SETTINGS**. Auto-cycle (60s by default) do
 | Row | Tap behaviour |
 |---|---|
 | BRIGHTNESS | cycles `LOW` / `MID` / `HIGH` — backlight PWM applies instantly |
-| QUIET HOURS | tap once to edit start hour, again to edit end hour (chevron taps adjust) |
+| QUIET HOURS | tap to enter start-hour edit; chevron taps adjust the value (top half +1, bottom half -1). Tap any other row or wait 3 s to advance to end-hour edit, then again to commit |
 | QUIET MODE | `OFF` / `DIM` / `SLEEP` — DIM uses the lowest brightness during the window, SLEEP turns the backlight off |
 | AUTO-CYCLE | `OFF` / `60s` / `30s` / `120s` — controls the rotation interval for the other three modes |
 | RESET | press and hold 3 seconds; the orange bar fills L→R, then the device clears Wi-Fi credentials and reboots into the captive portal |
