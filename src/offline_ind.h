@@ -14,6 +14,9 @@ static constexpr unsigned long STALE_AFTER_MS   = 60UL  * 1000UL;
 static constexpr unsigned long OFFLINE_AFTER_MS = 180UL * 1000UL;
 static constexpr unsigned long PULSE_PERIOD_MS  = 500UL;
 
+// Glyph colours.
+static constexpr uint16_t GLYPH_DARK_RED = 0x6800;
+
 static State         currentState   = OFFLINE; // until first success
 static unsigned long lastSuccessMs  = 0;
 static bool          hadSuccessEver = false;
@@ -88,7 +91,7 @@ inline void drawGlyph(TFT_eSPI& tft) {
 
   if (!stateChanged && !phaseChanged) return;
 
-  uint16_t fg = (phase == 0) ? TFT_RED : 0x6800; // dark red
+  uint16_t fg = (phase == 0) ? TFT_RED : GLYPH_DARK_RED;
   for (int r = 0; r < 5; r++) {
     for (int c = 0; c < 5; c++) {
       uint16_t color = GLYPH[r][c] ? fg : TFT_BLACK;

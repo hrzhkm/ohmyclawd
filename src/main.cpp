@@ -255,7 +255,14 @@ void runSprite() {
   uint8_t count = pgm_read_byte(&sprite_anim_count[spriteAnim]);
   if (millis() - lastSpriteFrame < pgm_read_word(&sprite_hold[offset + spriteFrame])) return;
   lastSpriteFrame = millis();
-  static const uint16_t colors[] = {TFT_BLACK, TFT_ORANGE, TFT_BLACK, TFT_CYAN, TFT_DARKGREY, TFT_WHITE};
+  uint16_t colors[6] = {
+    TFT_BLACK,
+    offline_ind::tintColor(TFT_ORANGE),
+    TFT_BLACK,
+    offline_ind::tintColor(TFT_CYAN),
+    TFT_DARKGREY,
+    TFT_WHITE,
+  };
   const int cell = 8;
   const int px = 7;
   const int xOff = (240 - SPRITE_W * cell) / 2;
@@ -309,8 +316,9 @@ void runSprite() {
   tft.drawCentreString("SESSION", 120, barY, 1);
   int sBarY = barY + 12;
   int sFilled = (usageSession * numCells) / 100;
-  for (int i = 0; i < numCells; i++) tft.fillRect(barX + i * cellW, sBarY, cellPx, cellPx, (i < sFilled) ? TFT_ORANGE : TFT_DARKGREY);
-  tft.setTextColor(TFT_ORANGE, TFT_BLACK);
+  uint16_t sessionColor = offline_ind::tintColor(TFT_ORANGE);
+  for (int i = 0; i < numCells; i++) tft.fillRect(barX + i * cellW, sBarY, cellPx, cellPx, (i < sFilled) ? sessionColor : TFT_DARKGREY);
+  tft.setTextColor(sessionColor, TFT_BLACK);
   tft.drawString(String(usageSession) + "% ", barX + barW + 4, sBarY, 1);
   int sResetY = sBarY + cellPx + 3;
   tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
@@ -323,8 +331,9 @@ void runSprite() {
   tft.drawCentreString("WEEKLY", 120, wLabelY, 1);
   int wBarY = wLabelY + 12;
   int wFilled = (usageWeekly * numCells) / 100;
-  for (int i = 0; i < numCells; i++) tft.fillRect(barX + i * cellW, wBarY, cellPx, cellPx, (i < wFilled) ? TFT_CYAN : TFT_DARKGREY);
-  tft.setTextColor(TFT_CYAN, TFT_BLACK);
+  uint16_t weeklyColor = offline_ind::tintColor(TFT_CYAN);
+  for (int i = 0; i < numCells; i++) tft.fillRect(barX + i * cellW, wBarY, cellPx, cellPx, (i < wFilled) ? weeklyColor : TFT_DARKGREY);
+  tft.setTextColor(weeklyColor, TFT_BLACK);
   tft.drawString(String(usageWeekly) + "% ", barX + barW + 4, wBarY, 1);
   int wResetY = wBarY + cellPx + 3;
   tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
@@ -333,6 +342,7 @@ void runSprite() {
   else if (usageWR >= 60) wReset += String(usageWR / 60) + "h";
   else wReset += String(usageWR) + "m";
   tft.drawCentreString(wReset, 120, wResetY, 1);
+  offline_ind::drawGlyph(tft);
 }
 
 void fetchUsage() {
@@ -402,7 +412,9 @@ void runClock() {
     for (int i = 0; i < numCells; i++)
       tft.fillRect(barX + i * 8, barY, 7, 7, (i <= filled) ? TFT_ORANGE : TFT_DARKGREY);
     lsec = ti.tm_sec;
+    offline_ind::drawGlyph(tft);
   }
+  offline_ind::drawGlyph(tft);
 }
 
 void runSystem() {
@@ -464,6 +476,7 @@ void runSystem() {
   drawRow("BY", "opariffazman");
   drawRow("GH", "opariffazman/ohmyclawd");
   tft.setTextDatum(TL_DATUM);
+  offline_ind::drawGlyph(tft);
 }
 
 void checkOTA() {
