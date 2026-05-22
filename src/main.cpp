@@ -26,10 +26,9 @@ SPIClass touchSPI = SPIClass(VSPI);
 XPT2046_Touchscreen ts(XPT2046_CS, XPT2046_IRQ);
 Preferences prefs;
 
-int currentMode = 0; 
-bool isAutoCycle = true; 
+int currentMode = 0;
+bool isAutoCycle = true;
 unsigned long modeTimer = 0;
-const unsigned long interval = 60000; 
 bool modeChanged = true;
 
 uint8_t spriteFrame = 0;
@@ -153,6 +152,13 @@ void setup() {
 
 void loop() {
   if (ts.touched()) {
+    if (display_pm::isSleeping()) {
+      display_pm::wake(10000);
+      // Drain the rest of this press so it doesn't fall through to gesture handling.
+      while (ts.touched()) { delay(20); }
+      delay(200);
+      return;
+    }
     TS_Point p = ts.getPoint();
     int startX = map(p.x, 300, 3900, 0, 240);
     int lastX = startX;
@@ -236,7 +242,8 @@ void loop() {
   }
   display_pm::tick();
   offline_ind::update();
-  if (isAutoCycle && (millis() - modeTimer > interval)) nextMode();
+  uint32_t cycleMs = display_pm::getCycleIntervalMs();
+  if (isAutoCycle && cycleMs > 0 && (millis() - modeTimer > cycleMs)) nextMode();
   if (millis() - lastUsageFetch > 30000 || lastUsageFetch == 0) { fetchUsage(); lastUsageFetch = millis(); }
 
   switch (currentMode) {
