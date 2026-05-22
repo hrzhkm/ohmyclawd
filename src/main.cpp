@@ -233,8 +233,15 @@ void loop() {
 }
 
 void runSettings() {
-  if (modeChanged) { settings_ui::enter(); modeChanged = false; settings_ui::render(tft, true); return; }
+  if (modeChanged) {
+    settings_ui::enter();
+    modeChanged = false;
+    settings_ui::render(tft, true);
+    offline_ind::drawGlyph(tft);
+    return;
+  }
   settings_ui::render(tft, false);
+  offline_ind::drawGlyph(tft);
 }
 
 void nextMode() { currentMode = (currentMode + 1) % 3; modeChanged = true; modeTimer = millis(); tft.fillScreen(TFT_BLACK); }

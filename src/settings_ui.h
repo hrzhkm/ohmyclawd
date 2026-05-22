@@ -3,8 +3,6 @@
 
 #include <Arduino.h>
 #include <TFT_eSPI.h>
-#include <WiFiManager.h>
-#include <Preferences.h>
 #include "display_pm.h"
 
 namespace settings_ui {
@@ -13,6 +11,7 @@ enum Sub { BROWSE, EDIT_QH_START, EDIT_QH_END };
 
 static Sub           sub               = BROWSE;
 static bool          needsFullRedraw   = true;
+static bool          rowsDirty         = true;
 static unsigned long resetHoldStartMs  = 0;
 static bool          resetActive       = false;
 static int           resetFilledPx     = 0;
@@ -75,8 +74,10 @@ inline void render(TFT_eSPI& tft, bool fullRedraw);
 inline void enter() {
   sub = BROWSE;
   needsFullRedraw = true;
+  rowsDirty = true;
   resetActive = false;
   resetFilledPx = 0;
+  subEnteredMs = millis();
 }
 
 inline void exit() {
@@ -98,39 +99,43 @@ inline void render(TFT_eSPI& tft, bool fullRedraw) {
     needsFullRedraw = false;
   }
 
-  // Row 0 - BRIGHTNESS
-  drawRow(tft, 0, "BRIGHTNESS", String(briLabel()), false);
+  if (rowsDirty || fullRedraw) {
+    // Row 0 - BRIGHTNESS
+    drawRow(tft, 0, "BRIGHTNESS", String(briLabel()), false);
 
-  // Row 1 - QUIET HOURS (varies with sub-mode)
-  if (sub == EDIT_QH_START) {
-    char buf[16];
-    snprintf(buf, sizeof(buf), "< %02d >", display_pm::qhStart);
-    drawRow(tft, 1, "QUIET START", String(buf), true);
-  } else if (sub == EDIT_QH_END) {
-    char buf[16];
-    snprintf(buf, sizeof(buf), "< %02d >", display_pm::qhEnd);
-    drawRow(tft, 1, "QUIET END", String(buf), true);
-  } else {
-    drawRow(tft, 1, "QUIET HOURS", qhRangeStr(), false);
-  }
+    // Row 1 - QUIET HOURS (varies with sub-mode)
+    if (sub == EDIT_QH_START) {
+      char buf[16];
+      snprintf(buf, sizeof(buf), "< %02d >", display_pm::qhStart);
+      drawRow(tft, 1, "QUIET START", String(buf), true);
+    } else if (sub == EDIT_QH_END) {
+      char buf[16];
+      snprintf(buf, sizeof(buf), "< %02d >", display_pm::qhEnd);
+      drawRow(tft, 1, "QUIET END", String(buf), true);
+    } else {
+      drawRow(tft, 1, "QUIET HOURS", qhRangeStr(), false);
+    }
 
-  drawRow(tft, 2, "QUIET MODE", String(qhmLabel()), false);
-  drawRow(tft, 3, "AUTO-CYCLE", String(cycLabel()), false);
+    drawRow(tft, 2, "QUIET MODE", String(qhmLabel()), false);
+    drawRow(tft, 3, "AUTO-CYCLE", String(cycLabel()), false);
 
-  // Row 4 - RESET (paints fill bar if active)
-  if (resetActive) {
-    int y = rowY(4);
-    tft.fillRect(0, y, 240, ROW_H - 1, TFT_BLACK);
-    tft.fillRect(0, y, resetFilledPx, ROW_H - 1, TFT_ORANGE);
-    tft.setTextSize(1);
-    tft.setTextColor(TFT_WHITE, TFT_BLACK);
-    tft.setTextDatum(TL_DATUM);
-    tft.drawString("RESET", LABEL_X, y + 8, 2);
-    tft.setTextDatum(TR_DATUM);
-    tft.drawString("hold...", VALUE_X, y + 8, 2);
-    tft.drawFastHLine(RULE_INDENT, y + ROW_H - 1, 240 - 2 * RULE_INDENT, TFT_DARKGREY);
-  } else {
-    drawRow(tft, 4, "RESET", "hold 3s", false);
+    // Row 4 - RESET (paints fill bar if active)
+    if (resetActive) {
+      int y = rowY(4);
+      tft.fillRect(0, y, 240, ROW_H - 1, TFT_BLACK);
+      tft.fillRect(0, y, resetFilledPx, ROW_H - 1, TFT_ORANGE);
+      tft.setTextSize(1);
+      tft.setTextColor(TFT_WHITE, TFT_BLACK);
+      tft.setTextDatum(TL_DATUM);
+      tft.drawString("RESET", LABEL_X, y + 8, 2);
+      tft.setTextDatum(TR_DATUM);
+      tft.drawString("hold...", VALUE_X, y + 8, 2);
+      tft.drawFastHLine(RULE_INDENT, y + ROW_H - 1, 240 - 2 * RULE_INDENT, TFT_DARKGREY);
+    } else {
+      drawRow(tft, 4, "RESET", "hold 3s", false);
+    }
+
+    rowsDirty = false;
   }
 }
 
