@@ -68,7 +68,44 @@ inline void init(Preferences& prefs) {
   if (ledcOk) writeDuty(currentDuty);
 }
 
-inline void tick() { /* implemented in Task 2 */ }
+inline void tick() {
+  // 1) Determine whether we're in the quiet-hours window.
+  struct tm ti;
+  bool haveTime = getLocalTime(&ti, 5); // 5ms timeout, non-blocking
+  if (haveTime && qhStart != qhEnd) {
+    uint8_t h = ti.tm_hour;
+    if (qhStart < qhEnd) {
+      inQuiet = (h >= qhStart && h < qhEnd);
+    } else {
+      inQuiet = (h >= qhStart || h < qhEnd);
+    }
+  } else {
+    inQuiet = false;
+  }
+
+  // 2) Choose target duty.
+  if (!inQuiet || qhMode == 0) {
+    targetDuty = LEVELS[briLevel];
+  } else if (qhMode == 1) {
+    targetDuty = LEVELS[0];
+  } else { // SLEEP
+    targetDuty = (wakeUntilMs > millis()) ? LEVELS[0] : 0;
+  }
+
+  // 3) Fade currentDuty toward targetDuty at +/- 8 per 30ms.
+  unsigned long now = millis();
+  if (now - lastFadeMs >= 30) {
+    lastFadeMs = now;
+    if (currentDuty < targetDuty) {
+      uint16_t next = (uint16_t)currentDuty + 8;
+      currentDuty = (next > targetDuty) ? targetDuty : (uint8_t)next;
+    } else if (currentDuty > targetDuty) {
+      int16_t next = (int16_t)currentDuty - 8;
+      currentDuty = (next < targetDuty) ? targetDuty : (uint8_t)next;
+    }
+    if (ledcOk) writeDuty(currentDuty);
+  }
+}
 inline void wake(uint16_t ms) { wakeUntilMs = millis() + ms; }
 inline bool isSleeping() { return inQuiet && qhMode == 2; }
 
@@ -84,6 +121,7 @@ inline uint32_t getCycleIntervalMs() {
 inline void setBrightness(uint8_t lvl) {
   if (lvl > 2) lvl = 2;
   briLevel = lvl;
+  if (!inQuiet || qhMode == 0) targetDuty = LEVELS[briLevel];
   Preferences p; p.begin("ohmyclawd", false);
   p.putUChar("bri", briLevel);
   p.end();

@@ -215,6 +215,7 @@ void loop() {
     }
     delay(200);
   }
+  display_pm::tick();
   if (isAutoCycle && (millis() - modeTimer > interval)) nextMode();
   if (millis() - lastUsageFetch > 30000 || lastUsageFetch == 0) { fetchUsage(); lastUsageFetch = millis(); }
 
