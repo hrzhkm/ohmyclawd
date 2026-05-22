@@ -253,6 +253,7 @@ void runSprite() {
   }
   uint16_t offset = pgm_read_word(&sprite_anim_offset[spriteAnim]);
   uint8_t count = pgm_read_byte(&sprite_anim_count[spriteAnim]);
+  offline_ind::drawGlyph(tft);
   if (millis() - lastSpriteFrame < pgm_read_word(&sprite_hold[offset + spriteFrame])) return;
   lastSpriteFrame = millis();
   uint16_t colors[6] = {
@@ -418,6 +419,7 @@ void runClock() {
 }
 
 void runSystem() {
+  offline_ind::drawGlyph(tft);
   if (!modeChanged) return;
   modeChanged = false;
   tft.fillScreen(TFT_BLACK);
@@ -476,7 +478,6 @@ void runSystem() {
   drawRow("BY", "opariffazman");
   drawRow("GH", "opariffazman/ohmyclawd");
   tft.setTextDatum(TL_DATUM);
-  offline_ind::drawGlyph(tft);
 }
 
 void checkOTA() {
