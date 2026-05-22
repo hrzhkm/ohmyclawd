@@ -158,11 +158,23 @@ void loop() {
     int lastX = startX;
     unsigned long touchStart = millis();
     while (ts.touched()) {
-      if (millis() - touchStart >= 5000) {
-        WiFiManager wm;
-        wm.resetSettings();
-        prefs.begin("ohmyclawd", false); prefs.clear(); prefs.end();
-        ESP.restart();
+      unsigned long elapsedSoFar = millis() - touchStart;
+      if (currentMode == 3) {
+        int yMapped = map(p.y, 300, 3900, 0, 320);
+        settings_ui::handleHoldTick(tft, yMapped, elapsedSoFar);
+        if (settings_ui::consumeResetIfTriggered()) {
+          WiFiManager wm;
+          wm.resetSettings();
+          prefs.begin("ohmyclawd", false); prefs.clear(); prefs.end();
+          ESP.restart();
+        }
+      } else {
+        if (elapsedSoFar >= 5000) {
+          WiFiManager wm;
+          wm.resetSettings();
+          prefs.begin("ohmyclawd", false); prefs.clear(); prefs.end();
+          ESP.restart();
+        }
       }
       p = ts.getPoint();
       lastX = map(p.x, 300, 3900, 0, 240);
@@ -170,6 +182,7 @@ void loop() {
     }
     unsigned long elapsed = millis() - touchStart;
     int deltaX = lastX - startX;
+    if (currentMode == 3) settings_ui::cancelHold();
     if (elapsed < 500 && abs(deltaX) > 40) {
       // Swipe
       isAutoCycle = false;

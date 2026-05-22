@@ -141,6 +141,61 @@ inline void handleTap(TFT_eSPI& tft, int touchY) {
   }
 }
 
+static constexpr unsigned long RESET_HOLD_MS = 3000UL;
+
+inline void handleHoldTick(TFT_eSPI& tft, int touchY, unsigned long elapsedMs) {
+  int row = rowFromY(touchY);
+  if (row != 4) {
+    if (resetActive) {
+      resetActive = false;
+      resetFilledPx = 0;
+      needsFullRedraw = true;
+      rowsDirty = true;
+    }
+    return;
+  }
+
+  if (!resetActive) {
+    resetActive = true;
+    resetHoldStartMs = millis() - elapsedMs;
+  }
+
+  unsigned long held = millis() - resetHoldStartMs;
+  if (held > RESET_HOLD_MS) held = RESET_HOLD_MS;
+  int filled = (int)((held * 240UL) / RESET_HOLD_MS);
+  if (filled != resetFilledPx) {
+    resetFilledPx = filled;
+    int y = rowY(4);
+    tft.fillRect(0, y, 240, ROW_H - 1, TFT_BLACK);
+    tft.fillRect(0, y, resetFilledPx, ROW_H - 1, TFT_ORANGE);
+    tft.setTextSize(1);
+    tft.setTextColor(TFT_WHITE, TFT_BLACK);
+    tft.setTextDatum(TL_DATUM);
+    tft.drawString("RESET", LABEL_X, y + 8, 2);
+    tft.setTextDatum(TR_DATUM);
+    tft.drawString("hold...", VALUE_X, y + 8, 2);
+    tft.drawFastHLine(RULE_INDENT, y + ROW_H - 1, 240 - 2 * RULE_INDENT, TFT_DARKGREY);
+  }
+}
+
+inline bool consumeResetIfTriggered() {
+  if (resetActive && (millis() - resetHoldStartMs) >= RESET_HOLD_MS) {
+    resetActive = false;
+    resetFilledPx = 0;
+    return true;
+  }
+  return false;
+}
+
+inline void cancelHold() {
+  if (resetActive) {
+    resetActive = false;
+    resetFilledPx = 0;
+    needsFullRedraw = true;
+    rowsDirty = true;
+  }
+}
+
 inline void render(TFT_eSPI& tft, bool fullRedraw);
 
 inline void enter() {
