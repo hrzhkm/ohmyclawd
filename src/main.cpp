@@ -178,8 +178,10 @@ void loop() {
       else { currentMode = (currentMode + 1) % 4; }            // swipe left  = next (of 4)
       modeChanged = true; modeTimer = millis(); tft.fillScreen(TFT_BLACK);
     } else if (elapsed < 300 && abs(deltaX) < 20) {
-      // Tap on sprite mode
-      if (currentMode == 0) {
+      int tapY = map(p.y, 300, 3900, 0, 320);
+      if (currentMode == 3) {
+        settings_ui::handleTap(tft, tapY);
+      } else if (currentMode == 0) {
         if (millis() - lastTapTime < 400) {
           // Double tap: toggle dynamic mode
           dynamicSprite = !dynamicSprite;

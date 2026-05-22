@@ -69,6 +69,69 @@ inline void drawRow(TFT_eSPI& tft, int idx, const char* label, const String& val
   tft.drawFastHLine(RULE_INDENT, y + ROW_H - 1, 240 - 2 * RULE_INDENT, TFT_DARKGREY);
 }
 
+inline void flashRow(TFT_eSPI& tft, int idx, const char* label, const String& value) {
+  drawRow(tft, idx, label, value, true);
+  delay(120);
+}
+
+inline void handleTap(TFT_eSPI& tft, int touchY) {
+  int row = rowFromY(touchY);
+  if (row < 0) return;
+
+  // Any tap outside row 4 cancels an in-progress hold visualisation.
+  if (row != 4) {
+    resetActive = false;
+    resetFilledPx = 0;
+  }
+
+  switch (row) {
+    case 0: {
+      display_pm::setBrightness((display_pm::briLevel + 1) % 3);
+      flashRow(tft, 0, "BRIGHTNESS", String(briLabel()));
+      needsFullRedraw = true;
+      rowsDirty = true;
+      break;
+    }
+    case 1: {
+      if (sub == BROWSE) {
+        sub = EDIT_QH_START;
+        subEnteredMs = millis();
+        needsFullRedraw = true;
+        rowsDirty = true;
+      } else if (sub == EDIT_QH_START || sub == EDIT_QH_END) {
+        // Chevron handling — top half of row = +1, bottom half = -1.
+        int y = rowY(1);
+        int midY = y + ROW_H / 2;
+        uint8_t& target = (sub == EDIT_QH_START) ? display_pm::qhStart : display_pm::qhEnd;
+        if (touchY < midY) target = (target + 1) % 24;
+        else                target = (target + 23) % 24;
+        display_pm::setQuietHours(display_pm::qhStart, display_pm::qhEnd, display_pm::qhMode);
+        subEnteredMs = millis();
+        needsFullRedraw = true;
+        rowsDirty = true;
+      }
+      break;
+    }
+    case 2: {
+      display_pm::setQuietHours(display_pm::qhStart, display_pm::qhEnd, (display_pm::qhMode + 1) % 3);
+      flashRow(tft, 2, "QUIET MODE", String(qhmLabel()));
+      needsFullRedraw = true;
+      rowsDirty = true;
+      break;
+    }
+    case 3: {
+      display_pm::setCycle((display_pm::cycMode + 1) % 4);
+      flashRow(tft, 3, "AUTO-CYCLE", String(cycLabel()));
+      needsFullRedraw = true;
+      rowsDirty = true;
+      break;
+    }
+    case 4:
+      // Brief tap on RESET = no-op. Only hold triggers (Task 8 handles).
+      break;
+  }
+}
+
 inline void render(TFT_eSPI& tft, bool fullRedraw);
 
 inline void enter() {
