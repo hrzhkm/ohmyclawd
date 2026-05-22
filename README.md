@@ -27,6 +27,8 @@ Displays real-time Claude Code session and weekly usage with animated pixel spri
 - **OTA firmware updates** — checks GitHub releases on boot, tap to update
 - **Configurable via captive portal** — no code changes needed for WiFi/daemon setup
 - **Pixel clock mode** — retro digital clock with second-progress bar
+- **On-device settings** — brightness, quiet hours, auto-cycle, and factory reset from a SETTINGS mode (swipe to reach)
+- **Offline indicator** — pixel `X` glyph and colour-drain when the daemon or Wi-Fi is unreachable
 
 ## Hardware
 
@@ -111,6 +113,22 @@ The animated sprite changes based on your Claude Code status (requires Claude Co
 | Heavy usage | work-think, idle-look-around | Session usage 50–79% |
 | Moderate usage | work-coding, dance-djmix | Session usage 25–49% |
 | Light usage | dance-bounce, dance-sway, bounce-dj, sway-dj, idle-blink | Session usage < 25% |
+
+## On-device settings
+
+Swipe through modes until you reach **SETTINGS**. Auto-cycle (60s by default) does NOT visit settings — it has to be reached manually.
+
+| Row | Tap behaviour |
+|---|---|
+| BRIGHTNESS | cycles `LOW` / `MID` / `HIGH` — backlight PWM applies instantly |
+| QUIET HOURS | tap once to edit start hour, again to edit end hour (chevron taps adjust) |
+| QUIET MODE | `OFF` / `DIM` / `SLEEP` — DIM uses the lowest brightness during the window, SLEEP turns the backlight off |
+| AUTO-CYCLE | `OFF` / `60s` / `30s` / `120s` — controls the rotation interval for the other three modes |
+| RESET | press and hold 3 seconds; the orange bar fills L→R, then the device clears Wi-Fi credentials and reboots into the captive portal |
+
+While quiet hours is in `SLEEP` mode, the screen is dark. Tap to wake the backlight to `LOW` for 10 seconds.
+
+When the daemon or Wi-Fi is unreachable, the usage bars and sprite drain to dark grey, and a pulsing red `X` appears top-right. Full colour returns automatically when the daemon is reachable again.
 
 ## Updating
 
