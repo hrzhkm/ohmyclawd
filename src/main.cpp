@@ -9,6 +9,7 @@
 #include <WiFiClientSecure.h>
 #include "time.h"
 #include "sprite_frames.h"
+#include "display_pm.h"
 
 // --- CYD PIN CONFIGURATION ---
 #define XPT2046_IRQ  36
@@ -78,8 +79,8 @@ void checkOTA();
 void setup() {
   tft.init();
   tft.invertDisplay(true);
-  tft.setRotation(0); 
-  pinMode(BACKLIGHT_PIN, OUTPUT); digitalWrite(BACKLIGHT_PIN, HIGH);
+  tft.setRotation(0);
+  display_pm::init(prefs);
   touchSPI.begin(XPT2046_CLK, XPT2046_MISO, XPT2046_MOSI, XPT2046_CS);
   ts.begin(touchSPI); ts.setRotation(0);
 
