@@ -10,6 +10,7 @@
 #include "time.h"
 #include "sprite_frames.h"
 #include "display_pm.h"
+#include "offline_ind.h"
 
 // --- CYD PIN CONFIGURATION ---
 #define XPT2046_IRQ  36
@@ -216,6 +217,7 @@ void loop() {
     delay(200);
   }
   display_pm::tick();
+  offline_ind::update();
   if (isAutoCycle && (millis() - modeTimer > interval)) nextMode();
   if (millis() - lastUsageFetch > 30000 || lastUsageFetch == 0) { fetchUsage(); lastUsageFetch = millis(); }
 
@@ -336,7 +338,9 @@ void runSprite() {
 void fetchUsage() {
   HTTPClient http;
   http.begin(daemonUrl + "/usage");
-  if (http.GET() == 200) {
+  int code = http.GET();
+  if (code == 200) {
+    offline_ind::recordSuccess();
     JsonDocument doc; deserializeJson(doc, http.getString());
     usageSession = doc["s"] | 0;
     usageWeekly = doc["w"] | 0;
@@ -358,6 +362,8 @@ void fetchUsage() {
       else newAnim = lightP[random(5)];
       if (newAnim != spriteAnim) { spriteAnim = newAnim; spriteFrame = 0; }
     }
+  } else {
+    offline_ind::recordFailure();
   }
   http.end();
 }
