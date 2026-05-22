@@ -11,6 +11,7 @@
 #include "sprite_frames.h"
 #include "display_pm.h"
 #include "offline_ind.h"
+#include "settings_ui.h"
 
 // --- CYD PIN CONFIGURATION ---
 #define XPT2046_IRQ  36
@@ -76,6 +77,7 @@ void runClock();
 void runSystem();
 void fetchUsage();
 void checkOTA();
+void runSettings();
 
 void setup() {
   tft.init();
@@ -171,8 +173,9 @@ void loop() {
     if (elapsed < 500 && abs(deltaX) > 40) {
       // Swipe
       isAutoCycle = false;
-      if (deltaX > 0) { currentMode = (currentMode + 2) % 3; } // swipe right = prev
-      else { currentMode = (currentMode + 1) % 3; }            // swipe left = next
+      if (currentMode == 3) settings_ui::exit();
+      if (deltaX > 0) { currentMode = (currentMode + 3) % 4; } // swipe right = prev (of 4)
+      else { currentMode = (currentMode + 1) % 4; }            // swipe left  = next (of 4)
       modeChanged = true; modeTimer = millis(); tft.fillScreen(TFT_BLACK);
     } else if (elapsed < 300 && abs(deltaX) < 20) {
       // Tap on sprite mode
@@ -225,7 +228,13 @@ void loop() {
     case 0: runSprite(); break;
     case 1: runClock(); break;
     case 2: runSystem(); break;
+    case 3: runSettings(); break;
   }
+}
+
+void runSettings() {
+  if (modeChanged) { settings_ui::enter(); modeChanged = false; settings_ui::render(tft, true); return; }
+  settings_ui::render(tft, false);
 }
 
 void nextMode() { currentMode = (currentMode + 1) % 3; modeChanged = true; modeTimer = millis(); tft.fillScreen(TFT_BLACK); }
