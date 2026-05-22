@@ -158,6 +158,15 @@ inline void exit() {
 }
 
 inline void render(TFT_eSPI& tft, bool fullRedraw) {
+  // Auto-commit edit sub-mode after EDIT_TIMEOUT_MS of inactivity.
+  if ((sub == EDIT_QH_START || sub == EDIT_QH_END) &&
+      millis() - subEnteredMs > EDIT_TIMEOUT_MS) {
+    sub = (sub == EDIT_QH_START) ? EDIT_QH_END : BROWSE;
+    subEnteredMs = millis();
+    needsFullRedraw = true;
+    rowsDirty = true;
+  }
+
   if (fullRedraw || needsFullRedraw) {
     tft.fillScreen(TFT_BLACK);
     tft.setTextSize(2);
