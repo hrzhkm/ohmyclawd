@@ -16,13 +16,14 @@ static constexpr uint32_t LEDC_FREQ_HZ = 5000;
 static constexpr uint8_t  LEDC_RES_BITS = 8;
 static constexpr uint8_t  LEDC_CHANNEL = 0;   // used only on Arduino-ESP32 2.x
 
-static uint8_t  briLevel    = 2;   // 0=LOW 1=MID 2=HIGH
+static uint8_t  briPct      = 100;  // 0-100%
 static uint8_t  qhStart     = 23;
 static uint8_t  qhEnd       = 7;
 static uint8_t  qhMode      = 0;   // 0=OFF 1=DIM 2=SLEEP
-static uint8_t  cycMode     = 1;   // 0=OFF 1=60s 2=30s 3=120s
+static uint8_t  cycSec      = 60;  // 0=OFF, 5-255 in 5s steps
 static bool     inQuiet     = false;
 static unsigned long wakeUntilMs = 0;
+static bool     previewActive = false;
 static uint8_t  currentDuty = 0;
 static uint8_t  targetDuty  = 0;
 static unsigned long lastFadeMs = 0;
@@ -50,20 +51,21 @@ inline void init(Preferences& prefs) {
   }
 
   prefs.begin("ohmyclawd", false);
-  briLevel = prefs.getUChar("bri",  2);
+  briPct   = prefs.getUChar("bri",  100);
+  if (briPct < 10) briPct = 10;
   qhStart  = prefs.getUChar("qh_s", 23);
   qhEnd    = prefs.getUChar("qh_e", 7);
   qhMode   = prefs.getUChar("qh_m", 0);
-  cycMode  = prefs.getUChar("cyc",  1);
+  cycSec   = prefs.getUChar("cyc",  60);
   prefs.end();
 
-  if (briLevel > 2) briLevel = 2;
+  if (briPct > 100) briPct = 100;
   if (qhStart  > 23) qhStart = 23;
   if (qhEnd    > 23) qhEnd   = 7;
   if (qhMode   > 2)  qhMode  = 0;
-  if (cycMode  > 3)  cycMode = 1;
+  if (cycSec != 0 && cycSec < 5) cycSec = 60;
 
-  targetDuty  = LEVELS[briLevel];
+  targetDuty  = (briPct * 255) / 100;
   currentDuty = targetDuty;
   if (ledcOk) writeDuty(currentDuty);
 }
@@ -83,13 +85,15 @@ inline void tick() {
     inQuiet = false;
   }
 
-  // 2) Choose target duty.
-  if (!inQuiet || qhMode == 0) {
-    targetDuty = LEVELS[briLevel];
-  } else if (qhMode == 1) {
-    targetDuty = LEVELS[0];
-  } else { // SLEEP
-    targetDuty = (wakeUntilMs > millis()) ? LEVELS[0] : 0;
+  // 2) Choose target duty (skip if preview is active).
+  if (!previewActive) {
+    if (!inQuiet || qhMode == 0) {
+      targetDuty = (briPct * 255) / 100;
+    } else if (qhMode == 1) {
+      targetDuty = 25;
+    } else { // SLEEP
+      targetDuty = (wakeUntilMs > millis()) ? 25 : 0;
+    }
   }
 
   // 3) Fade currentDuty toward targetDuty at +/- 8 per 30ms.
@@ -107,23 +111,23 @@ inline void tick() {
   }
 }
 inline void wake(uint16_t ms) { wakeUntilMs = millis() + ms; }
-inline bool isSleeping() { return inQuiet && qhMode == 2; }
+inline bool isSleeping() { return inQuiet && qhMode == 2 && wakeUntilMs <= millis(); }
 
 inline uint32_t getCycleIntervalMs() {
-  switch (cycMode) {
-    case 1:  return 60000UL;
-    case 2:  return 30000UL;
-    case 3:  return 120000UL;
-    default: return 0UL;
-  }
+  return (cycSec == 0) ? 0UL : (uint32_t)cycSec * 1000UL;
 }
 
-inline void setBrightness(uint8_t lvl) {
-  if (lvl > 2) lvl = 2;
-  briLevel = lvl;
-  if (!inQuiet || qhMode == 0) targetDuty = LEVELS[briLevel];
+inline void previewBrightness(uint8_t pct) {
+  if (pct > 100) pct = 100;
+  if (!inQuiet || qhMode == 0) { targetDuty = (pct * 255) / 100; }
+}
+
+inline void setBrightness(uint8_t pct) {
+  if (pct > 100) pct = 100;
+  briPct = pct;
+  if (!inQuiet || qhMode == 0) targetDuty = (briPct * 255) / 100;
   Preferences p; p.begin("ohmyclawd", false);
-  p.putUChar("bri", briLevel);
+  p.putUChar("bri", briPct);
   p.end();
 }
 
@@ -138,10 +142,10 @@ inline void setQuietHours(uint8_t s, uint8_t e, uint8_t m) {
   p.end();
 }
 
-inline void setCycle(uint8_t c) {
-  cycMode = c % 4;
+inline void setCycle(uint8_t s) {
+  cycSec = s;
   Preferences p; p.begin("ohmyclawd", false);
-  p.putUChar("cyc", cycMode);
+  p.putUChar("cyc", cycSec);
   p.end();
 }
 

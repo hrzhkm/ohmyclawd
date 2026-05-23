@@ -30,14 +30,12 @@ XPT2046_Touchscreen ts(XPT2046_CS, XPT2046_IRQ);
 Preferences prefs;
 
 int currentMode = 0;
-bool isAutoCycle = true;
 unsigned long modeTimer = 0;
 bool modeChanged = true;
 
 uint8_t spriteFrame = 0;
 uint8_t spriteAnim = 0;
 unsigned long lastSpriteFrame = 0;
-unsigned long lastTapTime = 0;
 bool dynamicSprite = true;
 
 int usageSession = 0;
@@ -83,12 +81,12 @@ bool handleNavTap(int tapX, int tapY) {
   if (tapY < NAV_Y || tapY > NAV_Y + NAV_H) return false;
   if (tapX >= NAV_LEFT_X && tapX < NAV_LEFT_X + NAV_BTN_W) {
     currentMode = (currentMode + 3) % 4;
-    isAutoCycle = false; modeChanged = true; modeTimer = millis(); tft.fillScreen(TFT_BLACK);
+    modeChanged = true; modeTimer = millis(); tft.fillScreen(TFT_BLACK);
     return true;
   }
   if (tapX >= NAV_RIGHT_X && tapX < NAV_RIGHT_X + NAV_BTN_W) {
     currentMode = (currentMode + 1) % 4;
-    isAutoCycle = false; modeChanged = true; modeTimer = millis(); tft.fillScreen(TFT_BLACK);
+    modeChanged = true; modeTimer = millis(); tft.fillScreen(TFT_BLACK);
     return true;
   }
   return false;
@@ -108,6 +106,7 @@ void setup() {
   prefs.begin("ohmyclawd", false);
   daemonUrl = prefs.getString("url", "http://ohmyclawd.local:8787");
   String tzStr = prefs.getString("tz", "UTC-8");
+  dynamicSprite = prefs.getBool("dyn_spr", true);
   prefs.end();
 
   tft.fillScreen(TFT_BLACK);
@@ -182,7 +181,8 @@ void loop() {
       unsigned long elapsedSoFar = millis() - touchStart;
       if (currentMode == 3) {
         int yMapped = map(p.y, 300, 3900, 0, 320);
-        settings_ui::handleHoldTick(tft, yMapped, elapsedSoFar);
+        int xMapped = map(p.x, 300, 3900, 0, 240);
+        settings_ui::handleHoldTick(tft, yMapped, xMapped, elapsedSoFar);
         if (settings_ui::consumeResetIfTriggered()) {
           WiFiManager wm;
           wm.resetSettings();
@@ -205,7 +205,6 @@ void loop() {
     int deltaX = lastX - startX;
     if (currentMode == 3) settings_ui::cancelHold();
     if (elapsed < 500 && abs(deltaX) > 40) {
-      isAutoCycle = false;
       if (currentMode == 3) settings_ui::exit();
       if (deltaX > 0) { currentMode = (currentMode + 3) % 4; }
       else { currentMode = (currentMode + 1) % 4; }
@@ -216,38 +215,33 @@ void loop() {
       if (handleNavTap(tapX, tapY)) {
         // handled
       } else if (currentMode == 3) {
-        settings_ui::handleTap(tft, tapY);
+        settings_ui::handleTap(tft, tapY, tapX);
       } else if (currentMode == 0) {
-        if (millis() - lastTapTime < 400) {
-          dynamicSprite = !dynamicSprite;
-          lastTapTime = 0;
-          tft.fillRect(0, 35, 240, 10, TFT_BLACK);
-          tft.setTextSize(1); tft.setTextColor(TFT_ORANGE, TFT_BLACK);
-          tft.setTextDatum(MC_DATUM);
-          tft.drawString(dynamicSprite ? "dynamic mode" : "free mode", 120, 39, 1);
-          tft.setTextDatum(TL_DATUM);
+        if (dynamicSprite) {
+          static const uint8_t waitPool[] = {3, 4};
+          static const uint8_t limitPool[] = {2, 6};
+          static const uint8_t heavyPool[] = {8, 7};
+          static const uint8_t modPool[] = {12, 11};
+          static const uint8_t lightPool[] = {0, 1, 9, 10, 5};
+          const uint8_t* pool; uint8_t poolSize;
+          if (claudeWaiting > 0) { pool = waitPool; poolSize = 2; }
+          else if (usageSession >= 80) { pool = limitPool; poolSize = 2; }
+          else if (usageSession >= 50) { pool = heavyPool; poolSize = 2; }
+          else if (usageSession >= 25) { pool = modPool; poolSize = 2; }
+          else { pool = lightPool; poolSize = 5; }
+          uint8_t idx = 0;
+          for (uint8_t i = 0; i < poolSize; i++) { if (pool[i] == spriteAnim) { idx = i; break; } }
+          spriteAnim = pool[(idx + 1) % poolSize];
         } else {
-          lastTapTime = millis();
-          if (dynamicSprite) {
-            static const uint8_t waitPool[] = {3, 4};
-            static const uint8_t limitPool[] = {2, 6};
-            static const uint8_t heavyPool[] = {8, 7};
-            static const uint8_t modPool[] = {12, 11};
-            static const uint8_t lightPool[] = {0, 1, 9, 10, 5};
-            const uint8_t* pool; uint8_t poolSize;
-            if (claudeWaiting > 0) { pool = waitPool; poolSize = 2; }
-            else if (usageSession >= 80) { pool = limitPool; poolSize = 2; }
-            else if (usageSession >= 50) { pool = heavyPool; poolSize = 2; }
-            else if (usageSession >= 25) { pool = modPool; poolSize = 2; }
-            else { pool = lightPool; poolSize = 5; }
-            uint8_t idx = 0;
-            for (uint8_t i = 0; i < poolSize; i++) { if (pool[i] == spriteAnim) { idx = i; break; } }
-            spriteAnim = pool[(idx + 1) % poolSize];
-          } else {
-            spriteAnim = (spriteAnim + 1) % SPRITE_ANIM_COUNT;
-          }
-          spriteFrame = 0;
+          spriteAnim = (spriteAnim + 1) % SPRITE_ANIM_COUNT;
         }
+        spriteFrame = 0;
+        // Feedback: show sprite number briefly in status area
+        tft.fillRect(0, 35, 240, 10, TFT_BLACK);
+        tft.setTextSize(1); tft.setTextColor(TFT_ORANGE, TFT_BLACK);
+        tft.setTextDatum(MC_DATUM);
+        tft.drawString("sprite " + String(spriteAnim + 1) + "/" + String(SPRITE_ANIM_COUNT), 120, 39, 1);
+        tft.setTextDatum(TL_DATUM);
       }
     }
     delay(200);
@@ -255,7 +249,7 @@ void loop() {
   display_pm::tick();
   offline_ind::update();
   uint32_t cycleMs = display_pm::getCycleIntervalMs();
-  if (isAutoCycle && cycleMs > 0 && (millis() - modeTimer > cycleMs)) {
+  if (cycleMs > 0 && currentMode != 3 && (millis() - modeTimer > cycleMs)) {
     currentMode = (currentMode + 1) % 3;
     modeChanged = true; modeTimer = millis(); tft.fillScreen(TFT_BLACK);
   }

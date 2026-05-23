@@ -5,7 +5,6 @@
 extern TFT_eSPI tft;
 extern Preferences prefs;
 extern int currentMode;
-extern bool isAutoCycle;
 extern unsigned long modeTimer;
 extern bool modeChanged;
 extern int usageSession, usageWeekly, usageSR, usageWR, claudeWaiting;
@@ -15,7 +14,6 @@ extern String daemonUrl;
 extern uint8_t spriteFrame;
 extern uint8_t spriteAnim;
 extern unsigned long lastSpriteFrame;
-extern unsigned long lastTapTime;
 extern bool dynamicSprite;
 
 // Navigation

@@ -9,12 +9,12 @@ inline void runSystem() {
   modeChanged = false;
   tft.fillScreen(TFT_BLACK);
   tft.setTextSize(2); tft.setTextColor(TFT_ORANGE, TFT_BLACK);
-  tft.drawCentreString("OHMYCLAWD", 120, 5, 1);
-  tft.setTextSize(1); tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
-  tft.drawCentreString("SYSTEM", 120, 22, 1);
+  tft.setTextDatum(MC_DATUM);
+  tft.drawString("SYSTEM", 120, 15, 1);
+  tft.setTextSize(1);
 
-  int y = 45;
-  int labelX = 15, valX = 225, gap = 20;
+  int y = 40;
+  int labelX = 5, valX = 235, gap = 18;
 
   auto drawRow = [&](const char* label, String value) {
     tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
@@ -36,13 +36,14 @@ inline void runSystem() {
   drawRow("PANEL", "ILI9341 240x320");
   drawRow("TOUCH", "XPT2046");
 
+  // WiFi row with signal bars
   tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
   tft.setTextDatum(TL_DATUM);
   tft.drawString("WIFI", labelX, y, 1);
   int32_t rssi = WiFi.RSSI();
   int bars = (rssi > -50) ? 5 : (rssi > -60) ? 4 : (rssi > -70) ? 3 : (rssi > -80) ? 2 : 1;
   for (int i = 0; i < 5; i++)
-    tft.fillRect(130 + i * 8, y, 6, 6, (i < bars) ? TFT_ORANGE : TFT_DARKGREY);
+    tft.fillRect(120 + i * 8, y, 6, 6, (i < bars) ? TFT_ORANGE : TFT_DARKGREY);
   tft.setTextColor(TFT_ORANGE, TFT_BLACK);
   tft.setTextDatum(TR_DATUM);
   tft.drawString(String(rssi) + "dBm", valX, y, 1);
@@ -58,7 +59,6 @@ inline void runSystem() {
   drawRow("UP", up);
 
   drawRow("FW", "v" VERSION);
-  drawRow("BY", "opariffazman");
   drawRow("GH", "opariffazman/ohmyclawd");
   tft.setTextDatum(TL_DATUM);
 }
