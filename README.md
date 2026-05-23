@@ -27,7 +27,8 @@ Displays real-time Claude Code session and weekly usage with animated pixel spri
 - **OTA firmware updates** — checks GitHub releases on boot, tap to update
 - **Configurable via captive portal** — no code changes needed for WiFi/daemon setup
 - **Pixel clock mode** — retro digital clock with second-progress bar
-- **On-device settings** — brightness, quiet hours, auto-cycle, and factory reset from a SETTINGS mode (swipe to reach)
+- **On-device settings** — granular brightness, quiet hours, auto-cycle, sprite mode, and factory reset via hold-drag sliders
+- **Page navigation** — bottom-screen indicator dots + `<` `>` tap buttons
 - **Offline indicator** — pixel `X` glyph and colour-drain when the daemon or Wi-Fi is unreachable
 
 ## Hardware
@@ -100,7 +101,7 @@ Settings persist across reboots. Hold touch for 5 seconds to reset and reconfigu
 
 ### 4. Done!
 
-The CYD shows your Claude Code usage. Tap to switch between sprite and clock modes.
+The CYD shows your Claude Code usage. Tap to cycle sprites, swipe or use `<` `>` buttons to switch modes.
 
 ## Sprite States
 
@@ -116,21 +117,24 @@ The animated sprite changes based on your Claude Code status (requires Claude Co
 
 ## On-device settings
 
-Swipe through modes until you reach **SETTINGS**. Auto-cycle (60s by default) does NOT visit settings — it has to be reached manually.
+Swipe through modes until you reach **SETTINGS**. Auto-cycle does NOT visit settings — it must be reached manually via swipe or `<` `>` nav buttons.
 
-| Row | Tap behaviour |
-|---|---|
-| BRIGHTNESS | cycles `LOW` / `MID` / `HIGH` — backlight PWM applies instantly |
-| QUIET HOURS | tap to enter start-hour edit; chevron taps adjust the value (top half +1, bottom half -1). Tap any other row or wait 3 s to advance to end-hour edit, then again to commit |
-| QUIET MODE | `OFF` / `DIM` / `SLEEP` — DIM uses the lowest brightness during the window, SLEEP turns the backlight off |
-| AUTO-CYCLE | `OFF` / `60s` / `30s` / `120s` — controls the rotation interval for the other three modes |
-| RESET | press and hold 3 seconds; the orange bar fills L→R, then the device clears Wi-Fi credentials and reboots into the captive portal |
+All `*` rows use **hold-drag sliders**: hold for 0.5s until the orange bar appears, then drag left/right to adjust. Tap **SAVE** to persist changes. Swiping away without saving discards changes.
 
-While quiet hours is in `SLEEP` mode, the screen is dark. Tap to wake the backlight to `LOW` for 10 seconds.
+| Row | Interaction | Description |
+|---|---|---|
+| BRIGHTNESS * | hold-drag | 10–100% granular PWM, live preview while adjusting |
+| QUIET START * | hold-drag | Start hour (0–23) for quiet window |
+| QUIET END * | hold-drag | End hour (0–23), supports cross-midnight (e.g. 22→07) |
+| QUIET MODE | tap-cycle | `OFF` / `DIM` / `SLEEP` — DIM uses minimum brightness, SLEEP turns backlight off |
+| AUTO-CYCLE * | hold-drag | 5–250s rotation interval, or OFF (drag to 0) |
+| SPRITE MODE | tap-cycle | `DYNAMIC` (changes with usage state) / `FREE` (manual cycle) |
+| RESET | hold 3s | Orange bar fills L→R, then clears Wi-Fi + settings and reboots |
+| SAVE | tap | Persists all pending changes to NVS |
+
+While quiet hours is in `SLEEP` mode, the screen is dark. Tap to wake the backlight for 10 seconds — subsequent taps during the wake window work normally (swipe, nav, etc.).
 
 When the daemon or Wi-Fi is unreachable, the usage bars and sprite drain to dark grey, and a pulsing red `X` appears top-right. Full colour returns automatically when the daemon is reachable again.
-
-## Updating
 
 **Firmware:** updates itself via OTA — on boot it checks GitHub for a newer release and prompts to update.
 
@@ -163,8 +167,15 @@ See [daemon/README.md](daemon/README.md) for full setup instructions, environmen
 │   └── systemd/          # systemd service file
 ├── .github/workflows/    # CI: test + release binary
 └── src/
-    ├── main.cpp          # Firmware source
-    └── sprite_frames.h   # Generated animation frame data (13 presets)
+    ├── main.cpp          # Firmware source (setup, loop, input, OTA)
+    ├── globals.h         # Shared state and forward declarations
+    ├── mode_sprite.h     # Sprite animation + usage bars
+    ├── mode_clock.h      # Digital clock with second-progress bar
+    ├── mode_system.h     # System info screen
+    ├── settings_ui.h     # On-device settings (sliders, save, reset)
+    ├── display_pm.h      # Backlight PWM, quiet hours, sleep/wake
+    ├── offline_ind.h     # Offline state machine + colour drain
+    └── sprite_frames.h   # RLE-compressed animation frame data (13 presets)
 ```
 
 ## How It Works
