@@ -63,8 +63,8 @@ inline void init(Preferences& prefs) {
   if (qhMode   > 2)  qhMode  = 0;
   if (cycMode  > 3)  cycMode = 1;
 
-  currentDuty = 0;
   targetDuty  = LEVELS[briLevel];
+  currentDuty = targetDuty;
   if (ledcOk) writeDuty(currentDuty);
 }
 
