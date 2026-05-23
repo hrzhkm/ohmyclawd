@@ -80,10 +80,23 @@ jobs:
           pio run -e cyd
           cp .pio/build/cyd/firmware.bin ohmyclawd-firmware.bin
 
+      - name: build merged bin for web flasher
+        run: |
+          pip install esptool
+          VERSION="${GITHUB_REF_NAME#v}"
+          esptool.py --chip esp32 merge-bin \
+            -o ohmyclawd-cyd-merged.bin \
+            --flash-mode dio --flash-freq 40m --flash-size 4MB \
+            0x1000 .pio/build/cyd/bootloader.bin \
+            0x8000 .pio/build/cyd/partitions.bin \
+            0x10000 .pio/build/cyd/firmware.bin
+
       - uses: actions/upload-artifact@v7
         with:
           name: ohmyclawd-firmware
-          path: ohmyclawd-firmware.bin
+          path: |
+            ohmyclawd-firmware.bin
+            ohmyclawd-cyd-merged.bin
 
   publish:
     needs: [daemon-binary, firmware]
@@ -94,6 +107,32 @@ jobs:
       - uses: actions/download-artifact@v8
         with:
           merge-multiple: true
+
+      - name: update web flasher
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          cp ohmyclawd-cyd-merged.bin docs/firmware/ohmyclawd-cyd.bin
+          cat > docs/manifest.json << EOF
+          {
+            "name": "OhMyClawd",
+            "version": "${VERSION}",
+            "new_install_prompt_erase": true,
+            "builds": [
+              {
+                "chipFamily": "ESP32",
+                "parts": [{ "path": "firmware/ohmyclawd-cyd.bin", "offset": 0 }]
+              }
+            ]
+          }
+          EOF
+
+      - name: commit flasher update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/
+          git diff --cached --quiet || git commit -m "chore: update web flasher to ${GITHUB_REF_NAME}"
+          git push origin HEAD:master
 
       - name: create release
         env:
@@ -107,4 +146,5 @@ jobs:
             ohmyclawd-daemon-darwin-amd64 \
             ohmyclawd-daemon-darwin-arm64 \
             ohmyclawd-daemon-windows-amd64.exe \
-            ohmyclawd-firmware.bin
+            ohmyclawd-firmware.bin \
+            ohmyclawd-cyd-merged.bin

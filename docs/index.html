@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OhMyClawd — Flash Your CYD</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0d0d0d; color: #e0e0e0; font-family: monospace; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 2rem; }
+    h1 { color: #ff8c00; font-size: 2rem; margin-bottom: 0.5rem; }
+    .subtitle { color: #666; margin-bottom: 2rem; }
+    .card { background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 2rem; max-width: 500px; width: 100%; text-align: center; }
+    .card h2 { color: #ff8c00; margin-bottom: 1rem; font-size: 1.2rem; }
+    .card p { margin-bottom: 1rem; line-height: 1.6; color: #aaa; }
+    .steps { text-align: left; margin: 1.5rem 0; }
+    .steps li { margin-bottom: 0.5rem; color: #ccc; }
+    esp-web-install-button { margin: 1.5rem 0; }
+    esp-web-install-button::part(invoke-button) { background: #ff8c00; color: #000; font-family: monospace; font-weight: bold; font-size: 1rem; padding: 0.75rem 2rem; border: none; border-radius: 4px; cursor: pointer; }
+    esp-web-install-button::part(invoke-button):hover { background: #ffa333; }
+    .note { font-size: 0.8rem; color: #666; margin-top: 1.5rem; }
+    a { color: #ff8c00; }
+    .drivers { margin-top: 2rem; font-size: 0.85rem; color: #888; }
+    .drivers a { color: #ff8c00; }
+  </style>
+  <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+</head>
+<body>
+  <h1>⚡ OhMyClawd</h1>
+  <p class="subtitle">Claude Code usage monitor for ESP32-2432S028R (CYD 2.8")</p>
+
+  <div class="card">
+    <h2>Flash Firmware</h2>
+    <p>Flash ohmyclawd directly from your browser. No PlatformIO or esptool needed.</p>
+
+    <ol class="steps">
+      <li>Connect your CYD via USB</li>
+      <li>Click the button below</li>
+      <li>Select the serial port</li>
+      <li>Wait for flash to complete</li>
+    </ol>
+
+    <esp-web-install-button manifest="manifest.json">
+      <button slot="activate">Install OhMyClawd</button>
+      <span slot="unsupported">Your browser doesn't support Web Serial. Use Chrome, Edge, or Opera.</span>
+      <span slot="not-allowed">Web Serial requires HTTPS.</span>
+    </esp-web-install-button>
+
+    <p class="note">Requires Chrome, Edge, or Opera. First flash erases the device.</p>
+  </div>
+
+  <div class="drivers">
+    <p>USB driver needed? <a href="https://www.wch.cn/downloads/CH341SER_EXE.html">CH340</a> · <a href="https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers">CP210x</a></p>
+    <p>Linux users: add yourself to the <code>dialout</code> group</p>
+    <p><a href="https://github.com/opariffazman/ohmyclawd">← Back to README</a></p>
+  </div>
+</body>
+</html>
