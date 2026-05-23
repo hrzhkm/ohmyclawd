@@ -1,0 +1,16 @@
+{
+  "name": "OhMyClawd",
+  "version": "0.7.0",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32",
+      "parts": [
+        {
+          "path": "firmware/ohmyclawd-cyd.bin",
+          "offset": 0
+        }
+      ]
+    }
+  ]
+}

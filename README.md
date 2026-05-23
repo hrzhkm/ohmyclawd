@@ -72,7 +72,9 @@ ohmyclawd-daemon-windows-amd64.exe
 
 ### 2. Flash the firmware
 
-Requires [PlatformIO](https://platformio.org/).
+**Browser (easiest):** Visit the [Web Flasher](https://opariffazman.github.io/ohmyclawd/) — connect your CYD via USB and click install. No tools needed.
+
+**PlatformIO:**
 
 ```bash
 git clone https://github.com/opariffazman/ohmyclawd.git
