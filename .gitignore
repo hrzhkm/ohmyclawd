@@ -2,3 +2,5 @@
 .vscode
 .cache
 daemon/daemon
+frames/
+capture.gif

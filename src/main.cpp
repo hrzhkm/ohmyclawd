@@ -13,6 +13,7 @@
 #include "offline_ind.h"
 #include "settings_ui.h"
 #include "globals.h"
+#include "capture.h"
 #include "mode_sprite.h"
 #include "mode_clock.h"
 #include "mode_system.h"
@@ -25,6 +26,7 @@
 #define XPT2046_CS   33
 
 TFT_eSPI tft = TFT_eSPI();
+TFT_eSPI* canvas = &tft;
 SPIClass touchSPI = SPIClass(VSPI);
 XPT2046_Touchscreen ts(XPT2046_CS, XPT2046_IRQ);
 Preferences prefs;
@@ -47,6 +49,49 @@ unsigned long lastUsageFetch = 0;
 
 String daemonUrl;
 
+bool captureRecording = false;
+bool captureFrameReady = false;
+
+unsigned long animNow() { return capture::now(); }
+
+// Simple HTTP server for capture control
+#include <WebServer.h>
+WebServer captureServer(8789);
+
+static void handleCaptureStart() {
+  String sink = captureServer.arg("sink");
+  if (sink.length() == 0) {
+    // Derive from daemon URL (same machine that runs the daemon)
+    String host = daemonUrl;
+    if (host.startsWith("http://")) host = host.substring(7);
+    int colonIdx = host.indexOf(':');
+    if (colonIdx > 0) host = host.substring(0, colonIdx);
+    int slashIdx = host.indexOf('/');
+    if (slashIdx > 0) host = host.substring(0, slashIdx);
+    sink = "http://" + host + ":8788";
+  }
+  if (capture::init()) {
+    capture::startRecording(sink);
+    captureServer.send(200, "text/plain", "recording to " + sink);
+  } else {
+    captureServer.send(500, "text/plain", "sprite alloc failed");
+  }
+}
+
+static void handleCaptureStop() {
+  capture::stopRecording();
+  captureServer.send(200, "text/plain", "stopped, frames=" + String(capture::frameNum));
+}
+
+static void handleCaptureStatus() {
+  String json = "{\"recording\":" + String(capture::isActive() ? "true" : "false");
+  json += ",\"frames\":" + String(capture::frameNum);
+  json += ",\"heap\":" + String(ESP.getFreeHeap());
+  json += ",\"sink\":\"" + capture::sinkUrl + "\"";
+  json += ",\"ready\":" + String(captureFrameReady ? "true" : "false") + "}";
+  captureServer.send(200, "application/json", json);
+}
+
 const uint8_t banner_ohmy[BANNER_H][BANNER_W] PROGMEM = {
   {1,1,1,0,1,0,1,0,0,0,0,0,1,0,1,0,1,0,1},
   {1,0,1,0,1,0,1,0,0,0,0,0,1,1,1,0,1,0,1},
@@ -68,25 +113,25 @@ void drawPageIndicator() {
   int x = (240 - w) / 2;
   for (int i = 0; i < total; i++) {
     int bx = x + i * (size + gap);
-    if (i == currentMode) tft.fillRect(bx, y, size, size, TFT_ORANGE);
-    else tft.drawRect(bx, y, size, size, TFT_ORANGE);
+    if (i == currentMode) canvas->fillRect(bx, y, size, size, TFT_ORANGE);
+    else canvas->drawRect(bx, y, size, size, TFT_ORANGE);
   }
-  tft.setTextColor(TFT_ORANGE, TFT_BLACK);
-  tft.setTextSize(1);
-  tft.drawCentreString("<", NAV_LEFT_X + NAV_BTN_W / 2, NAV_Y + 2, 2);
-  tft.drawCentreString(">", NAV_RIGHT_X + NAV_BTN_W / 2, NAV_Y + 2, 2);
+  canvas->setTextColor(TFT_ORANGE, TFT_BLACK);
+  canvas->setTextSize(1);
+  canvas->drawCentreString("<", NAV_LEFT_X + NAV_BTN_W / 2, NAV_Y + 2, 2);
+  canvas->drawCentreString(">", NAV_RIGHT_X + NAV_BTN_W / 2, NAV_Y + 2, 2);
 }
 
 bool handleNavTap(int tapX, int tapY) {
   if (tapY < NAV_Y || tapY > NAV_Y + NAV_H) return false;
   if (tapX >= NAV_LEFT_X && tapX < NAV_LEFT_X + NAV_BTN_W) {
     currentMode = (currentMode + 3) % 4;
-    modeChanged = true; modeTimer = millis(); tft.fillScreen(TFT_BLACK);
+    modeChanged = true; modeTimer = millis(); canvas->fillScreen(TFT_BLACK);
     return true;
   }
   if (tapX >= NAV_RIGHT_X && tapX < NAV_RIGHT_X + NAV_BTN_W) {
     currentMode = (currentMode + 1) % 4;
-    modeChanged = true; modeTimer = millis(); tft.fillScreen(TFT_BLACK);
+    modeChanged = true; modeTimer = millis(); canvas->fillScreen(TFT_BLACK);
     return true;
   }
   return false;
@@ -96,6 +141,7 @@ void fetchUsage();
 void checkOTA();
 
 void setup() {
+  Serial.begin(115200);
   tft.init();
   tft.invertDisplay(true);
   tft.setRotation(0);
@@ -163,6 +209,13 @@ void setup() {
   checkOTA();
   tft.fillScreen(TFT_BLACK);
   modeTimer = millis();
+
+  // Capture control server
+  captureServer.on("/capture/start", HTTP_POST, handleCaptureStart);
+  captureServer.on("/capture/stop", HTTP_POST, handleCaptureStop);
+  captureServer.on("/capture/status", HTTP_GET, handleCaptureStatus);
+  captureServer.begin();
+  Serial.printf("[capture] control server on :8789\n");
 }
 
 void loop() {
@@ -182,7 +235,10 @@ void loop() {
       if (currentMode == 3) {
         int yMapped = map(p.y, 300, 3900, 0, 320);
         int xMapped = map(p.x, 300, 3900, 0, 240);
-        settings_ui::handleHoldTick(tft, yMapped, xMapped, elapsedSoFar);
+        settings_ui::handleHoldTick(*canvas, yMapped, xMapped, elapsedSoFar);
+        capture::markFrame();
+        capture::flush();
+        capture::endFrame();
         if (settings_ui::consumeResetIfTriggered()) {
           WiFiManager wm;
           wm.resetSettings();
@@ -208,7 +264,7 @@ void loop() {
       if (currentMode == 3) settings_ui::exit();
       if (deltaX > 0) { currentMode = (currentMode + 3) % 4; }
       else { currentMode = (currentMode + 1) % 4; }
-      modeChanged = true; modeTimer = millis(); tft.fillScreen(TFT_BLACK);
+      modeChanged = true; modeTimer = millis(); canvas->fillScreen(TFT_BLACK);
     } else if (elapsed < 300 && abs(deltaX) < 20) {
       int tapY = map(p.y, 300, 3900, 0, 320);
       int tapX = map(p.x, 300, 3900, 0, 240);
@@ -237,11 +293,11 @@ void loop() {
         }
         spriteFrame = 0;
         // Feedback: show sprite number briefly in status area
-        tft.fillRect(0, 35, 240, 10, TFT_BLACK);
-        tft.setTextSize(1); tft.setTextColor(TFT_ORANGE, TFT_BLACK);
-        tft.setTextDatum(MC_DATUM);
-        tft.drawString("sprite " + String(spriteAnim + 1) + "/" + String(SPRITE_ANIM_COUNT), 120, 39, 1);
-        tft.setTextDatum(TL_DATUM);
+        canvas->fillRect(0, 35, 240, 10, TFT_BLACK);
+        canvas->setTextSize(1); canvas->setTextColor(TFT_ORANGE, TFT_BLACK);
+        canvas->setTextDatum(MC_DATUM);
+        canvas->drawString("sprite " + String(spriteAnim + 1) + "/" + String(SPRITE_ANIM_COUNT), 120, 39, 1);
+        canvas->setTextDatum(TL_DATUM);
       }
     }
     delay(200);
@@ -251,21 +307,26 @@ void loop() {
   uint32_t cycleMs = display_pm::getCycleIntervalMs();
   if (cycleMs > 0 && currentMode != 3 && (millis() - modeTimer > cycleMs)) {
     currentMode = (currentMode + 1) % 3;
-    modeChanged = true; modeTimer = millis(); tft.fillScreen(TFT_BLACK);
+    modeChanged = true; modeTimer = millis(); canvas->fillScreen(TFT_BLACK);
   }
   if (millis() - lastUsageFetch > 30000 || lastUsageFetch == 0) { fetchUsage(); lastUsageFetch = millis(); }
+
+  captureServer.handleClient();
 
   switch (currentMode) {
     case 0: runSprite(); break;
     case 1: runClock(); break;
     case 2: runSystem(); break;
     case 3:
-      if (modeChanged) { settings_ui::enter(); modeChanged = false; settings_ui::render(tft, true); }
-      else { settings_ui::render(tft, false); }
-      offline_ind::drawGlyph(tft);
+      if (modeChanged) { settings_ui::enter(); modeChanged = false; settings_ui::render(*canvas, true); }
+      else { settings_ui::render(*canvas, false); }
+      offline_ind::drawGlyph(*canvas);
+      capture::markFrame();
       break;
   }
   drawPageIndicator();
+  capture::flush();
+  capture::endFrame();
 }
 
 void fetchUsage() {

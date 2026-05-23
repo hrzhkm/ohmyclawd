@@ -3,12 +3,20 @@
 #include <Preferences.h>
 
 extern TFT_eSPI tft;
+extern TFT_eSPI* canvas;  // render target: &tft normally, sprite when capturing
 extern Preferences prefs;
 extern int currentMode;
 extern unsigned long modeTimer;
 extern bool modeChanged;
 extern int usageSession, usageWeekly, usageSR, usageWR, claudeWaiting;
 extern String daemonUrl;
+
+// Virtual clock for capture mode (returns millis() normally, fixed-step when recording)
+unsigned long animNow();
+
+// Capture state (shared across all headers)
+extern bool captureRecording;
+extern bool captureFrameReady;
 
 // Sprite state (shared between main loop tap handling and mode_sprite)
 extern uint8_t spriteFrame;
