@@ -14,7 +14,7 @@
 
 Claude Code usage monitor on the ESP32-2432S028R (CYD 2.8") with pixel art animations.
 
-<img src="mode_sprite.gif" width="250"> | <img src="mode_clock.gif" width="250"> | <img src="mode_settings.gif" width="250">
+<img src="docs/assets/mode_sprite.gif" width="250"> | <img src="docs/assets/mode_clock.gif" width="250"> | <img src="docs/assets/mode_settings.gif" width="250">
 :---:|:---:|:---:
 
 Displays real-time Claude Code session and weekly usage with animated pixel sprites and a digital clock.

@@ -3,33 +3,52 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OhMyClawd — Flash Your CYD</title>
+  <title>OhMyClawd - Flash Your CYD</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #0d0d0d; color: #e0e0e0; font-family: monospace; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 2rem; }
-    h1 { color: #ff8c00; font-size: 2rem; margin-bottom: 0.5rem; }
-    .subtitle { color: #666; margin-bottom: 2rem; }
-    .card { background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 2rem; max-width: 500px; width: 100%; text-align: center; }
-    .card h2 { color: #ff8c00; margin-bottom: 1rem; font-size: 1.2rem; }
-    .card p { margin-bottom: 1rem; line-height: 1.6; color: #aaa; }
-    .steps { text-align: left; margin: 1.5rem 0; }
-    .steps li { margin-bottom: 0.5rem; color: #ccc; }
-    esp-web-install-button { margin: 1.5rem 0; }
-    esp-web-install-button::part(invoke-button) { background: #ff8c00; color: #000; font-family: monospace; font-weight: bold; font-size: 1rem; padding: 0.75rem 2rem; border: none; border-radius: 4px; cursor: pointer; }
+    body { background: #0a0a0a; color: #e0e0e0; font-family: 'Press Start 2P', monospace; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 2rem 1rem; line-height: 1.8; }
+    .ascii { color: #ff8c00; font-family: monospace; font-size: 0.55rem; white-space: pre; margin-bottom: 1rem; text-align: center; }
+    .subtitle { color: #666; font-size: 0.6rem; margin-bottom: 2rem; text-align: center; }
+    .preview { margin-bottom: 2rem; border: 3px solid #333; image-rendering: pixelated; }
+    .card { background: #111; border: 2px solid #333; padding: 1.5rem; max-width: 480px; width: 100%; }
+    .card h2 { color: #ff8c00; margin-bottom: 1rem; font-size: 0.8rem; }
+    .card p { margin-bottom: 1rem; font-size: 0.55rem; color: #aaa; }
+    .steps { text-align: left; margin: 1.5rem 0; padding-left: 1.5rem; }
+    .steps li { margin-bottom: 0.75rem; color: #ccc; font-size: 0.55rem; }
+    esp-web-install-button { display: block; margin: 1.5rem 0; text-align: center; }
+    esp-web-install-button::part(invoke-button) { background: #ff8c00; color: #000; font-family: 'Press Start 2P', monospace; font-size: 0.7rem; padding: 0.75rem 1.5rem; border: none; cursor: pointer; }
     esp-web-install-button::part(invoke-button):hover { background: #ffa333; }
-    .note { font-size: 0.8rem; color: #666; margin-top: 1.5rem; }
-    a { color: #ff8c00; }
-    .drivers { margin-top: 2rem; font-size: 0.85rem; color: #888; }
-    .drivers a { color: #ff8c00; }
+    .note { font-size: 0.45rem; color: #555; margin-top: 1rem; }
+    a { color: #ff8c00; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .footer { margin-top: 2rem; font-size: 0.5rem; color: #555; text-align: center; }
+    .footer a { color: #888; }
+    .drivers { margin-top: 1rem; font-size: 0.45rem; color: #555; }
   </style>
   <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
 </head>
 <body>
-  <h1>⚡ OhMyClawd</h1>
-  <p class="subtitle">Claude Code usage monitor for ESP32-2432S028R (CYD 2.8")</p>
+  <pre class="ascii">
+ ██████  ██   ██     ███    ███ ██    ██
+██    ██ ██   ██     ████  ████  ██  ██
+██    ██ ███████     ██ ████ ██   ████
+██    ██ ██   ██     ██  ██  ██    ██
+ ██████  ██   ██     ██      ██    ██
+
+ ██████ ██       █████  ██     ██ ██████
+██      ██      ██   ██ ██     ██ ██   ██
+██      ██      ███████ ██  █  ██ ██   ██
+██      ██      ██   ██ ██ ███ ██ ██   ██
+ ██████ ███████ ██   ██  ███ ███  ██████
+  </pre>
+  <p class="subtitle">Claude Code usage monitor for CYD 2.8"</p>
+
+  <img src="assets/mode_sprite.gif" width="240" class="preview" alt="sprite mode preview">
 
   <div class="card">
-    <h2>Flash Firmware</h2>
+    <h2>FLASH FIRMWARE</h2>
     <p>Flash ohmyclawd directly from your browser. No PlatformIO or esptool needed.</p>
 
     <ol class="steps">
@@ -40,18 +59,17 @@
     </ol>
 
     <esp-web-install-button manifest="manifest.json">
-      <button slot="activate">Install OhMyClawd</button>
-      <span slot="unsupported">Your browser doesn't support Web Serial. Use Chrome, Edge, or Opera.</span>
+      <button slot="activate">INSTALL</button>
+      <span slot="unsupported">Your browser does not support Web Serial. Use Chrome, Edge, or Opera.</span>
       <span slot="not-allowed">Web Serial requires HTTPS.</span>
     </esp-web-install-button>
 
     <p class="note">Requires Chrome, Edge, or Opera. First flash erases the device.</p>
+    <p class="drivers">USB drivers: <a href="https://www.wch.cn/downloads/CH341SER_EXE.html">CH340</a> / <a href="https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers">CP210x</a> — Linux: add yourself to dialout group</p>
   </div>
 
-  <div class="drivers">
-    <p>USB driver needed? <a href="https://www.wch.cn/downloads/CH341SER_EXE.html">CH340</a> · <a href="https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers">CP210x</a></p>
-    <p>Linux users: add yourself to the <code>dialout</code> group</p>
-    <p><a href="https://github.com/opariffazman/ohmyclawd">← Back to README</a></p>
+  <div class="footer">
+    <a href="https://github.com/opariffazman/ohmyclawd">github</a>
   </div>
 </body>
 </html>
