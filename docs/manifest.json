@@ -5,12 +5,7 @@
   "builds": [
     {
       "chipFamily": "ESP32",
-      "parts": [
-        {
-          "path": "firmware/ohmyclawd-cyd.bin",
-          "offset": 0
-        }
-      ]
+      "parts": [{ "path": "firmware/ohmyclawd-cyd.bin", "offset": 0 }]
     }
   ]
 }
