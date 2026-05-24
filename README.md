@@ -27,7 +27,7 @@ Displays real-time Claude Code session and weekly usage with animated pixel spri
 - **OTA firmware updates** — checks GitHub releases on boot, tap to update
 - **Configurable via captive portal** — no code changes needed for WiFi/daemon setup
 - **Pixel clock mode** — retro digital clock with second-progress bar
-- **On-device settings** — granular brightness, quiet hours, auto-cycle, sprite mode, and factory reset via hold-drag sliders
+- **On-device settings** — granular brightness, quiet hours, auto-cycle, sprite mode, orientation, and factory reset via hold-drag sliders
 - **Page navigation** — bottom-screen indicator dots + `<` `>` tap buttons
 - **Offline indicator** — pixel `X` glyph and colour-drain when the daemon or Wi-Fi is unreachable
 
@@ -131,6 +131,7 @@ All `*` rows use **hold-drag sliders**: hold for 0.5s until the orange bar appea
 | QUIET MODE | tap-cycle | `OFF` / `DIM` / `SLEEP` — DIM uses minimum brightness, SLEEP turns backlight off |
 | AUTO-CYCLE * | hold-drag | 5–250s rotation interval, or OFF (drag to 0) |
 | SPRITE MODE | tap-cycle | `DYNAMIC` (changes with usage state) / `FREE` (manual cycle) |
+| ORIENTATION | tap-cycle | `NORMAL` (USB at bottom) / `FLIPPED` (USB at top) |
 | RESET | hold 3s | Orange bar fills L→R, then clears Wi-Fi + settings and reboots |
 | SAVE | tap | Persists all pending changes to NVS |
 
