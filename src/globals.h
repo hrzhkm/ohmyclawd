@@ -24,6 +24,9 @@ extern uint8_t spriteAnim;
 extern unsigned long lastSpriteFrame;
 extern bool dynamicSprite;
 
+// Display orientation (0=normal, 2=flipped)
+extern uint8_t displayRotation;
+
 // Navigation
 const int NAV_Y = 295, NAV_H = 14;
 const int NAV_LEFT_X = 80, NAV_RIGHT_X = 140, NAV_BTN_W = 20;

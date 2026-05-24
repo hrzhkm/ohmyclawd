@@ -39,6 +39,7 @@ uint8_t spriteFrame = 0;
 uint8_t spriteAnim = 0;
 unsigned long lastSpriteFrame = 0;
 bool dynamicSprite = true;
+uint8_t displayRotation = 0;
 
 int usageSession = 0;
 int usageWeekly = 0;
@@ -53,6 +54,13 @@ bool captureRecording = false;
 bool captureFrameReady = false;
 
 unsigned long animNow() { return capture::now(); }
+
+inline int mapTouchX(int raw) {
+  return (displayRotation == 2) ? map(raw, 3900, 300, 0, 240) : map(raw, 300, 3900, 0, 240);
+}
+inline int mapTouchY(int raw) {
+  return (displayRotation == 2) ? map(raw, 3900, 300, 0, 320) : map(raw, 300, 3900, 0, 320);
+}
 
 // Simple HTTP server for capture control
 #include <WebServer.h>
@@ -144,16 +152,20 @@ void setup() {
   Serial.begin(115200);
   tft.init();
   tft.invertDisplay(true);
-  tft.setRotation(0);
   display_pm::init(prefs);
   touchSPI.begin(XPT2046_CLK, XPT2046_MISO, XPT2046_MOSI, XPT2046_CS);
-  ts.begin(touchSPI); ts.setRotation(0);
+  ts.begin(touchSPI);
 
   prefs.begin("ohmyclawd", false);
   daemonUrl = prefs.getString("url", "http://ohmyclawd.local:8787");
   String tzStr = prefs.getString("tz", "UTC-8");
   dynamicSprite = prefs.getBool("dyn_spr", true);
+  displayRotation = prefs.getUChar("rot", 0);
+  if (displayRotation != 0 && displayRotation != 2) displayRotation = 0;
   prefs.end();
+
+  tft.setRotation(displayRotation);
+  ts.setRotation(0);
 
   tft.fillScreen(TFT_BLACK);
   const int cell = 8, px = 7;
@@ -227,14 +239,14 @@ void loop() {
       return;
     }
     TS_Point p = ts.getPoint();
-    int startX = map(p.x, 300, 3900, 0, 240);
+    int startX = mapTouchX(p.x);
     int lastX = startX;
     unsigned long touchStart = millis();
     while (ts.touched()) {
       unsigned long elapsedSoFar = millis() - touchStart;
       if (currentMode == 3) {
-        int yMapped = map(p.y, 300, 3900, 0, 320);
-        int xMapped = map(p.x, 300, 3900, 0, 240);
+        int yMapped = mapTouchY(p.y);
+        int xMapped = mapTouchX(p.x);
         settings_ui::handleHoldTick(*canvas, yMapped, xMapped, elapsedSoFar);
         capture::markFrame();
         capture::flush();
@@ -254,7 +266,7 @@ void loop() {
         }
       }
       p = ts.getPoint();
-      lastX = map(p.x, 300, 3900, 0, 240);
+      lastX = mapTouchX(p.x);
       delay(20);
     }
     unsigned long elapsed = millis() - touchStart;
@@ -266,8 +278,8 @@ void loop() {
       else { currentMode = (currentMode + 1) % 4; }
       modeChanged = true; modeTimer = millis(); canvas->fillScreen(TFT_BLACK);
     } else if (elapsed < 300 && abs(deltaX) < 20) {
-      int tapY = map(p.y, 300, 3900, 0, 320);
-      int tapX = map(p.x, 300, 3900, 0, 240);
+      int tapY = mapTouchY(p.y);
+      int tapX = mapTouchX(p.x);
       if (handleNavTap(tapX, tapY)) {
         // handled
       } else if (currentMode == 3) {
@@ -433,8 +445,8 @@ void checkOTA() {
   while (millis() < timeout) {
     if (ts.touched()) {
       TS_Point p = ts.getPoint();
-      int tx = map(p.x, 300, 3900, 0, 240);
-      int ty = map(p.y, 300, 3900, 0, 320);
+      int tx = mapTouchX(p.x);
+      int ty = mapTouchY(p.y);
       if (ty >= 70 && ty <= 110) {
         if (tx >= 30 && tx <= 110) { accepted = true; break; }
         if (tx >= 130 && tx <= 210) { return; }

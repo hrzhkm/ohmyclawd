@@ -6,6 +6,8 @@
 #include "display_pm.h"
 
 extern bool dynamicSprite;
+extern uint8_t displayRotation;
+extern TFT_eSPI tft;
 
 namespace settings_ui {
 
@@ -17,18 +19,18 @@ static int           resetFilledPx     = 0;
 static bool          dirty             = false; // unsaved changes
 
 // Pending values (edited but not yet saved)
-static uint8_t  pBri, pQhStart, pQhEnd, pQhMode, pCycSec;
+static uint8_t  pBri, pQhStart, pQhEnd, pQhMode, pCycSec, pRotation;
 static bool     pDynSprite;
 
 // Layout constants.
-static constexpr int HEADER_Y_TOP    = 5;
-static constexpr int SUBHEADER_Y     = 30;
-static constexpr int ROW0_Y          = 50;
+static constexpr int HEADER_Y_TOP    = 2;
+static constexpr int SUBHEADER_Y     = 20;
+static constexpr int ROW0_Y          = 35;
 static constexpr int ROW_H           = 28;
 static constexpr int LABEL_X         = 15;
 static constexpr int VALUE_X         = 225;
 static constexpr int RULE_INDENT     = 5;
-static constexpr int NUM_ROWS        = 8;
+static constexpr int NUM_ROWS        = 9;
 
 inline int rowY(int idx) { return ROW0_Y + idx * ROW_H; }
 
@@ -48,6 +50,7 @@ inline String cycLabel() {
   return "< " + String(pCycSec) + "s >";
 }
 inline const char* sprModeLabel() { return pDynSprite ? "DYNAMIC" : "FREE"; }
+inline const char* orientLabel() { return pRotation == 0 ? "NORMAL" : "FLIPPED"; }
 
 inline String qhRangeStr() {
   char buf[16];
@@ -82,7 +85,7 @@ inline void handleTap(TFT_eSPI& tft, int touchY, int touchX) {
   int row = rowFromY(touchY);
   if (row < 0) return;
 
-  if (row != 6) { resetActive = false; resetFilledPx = 0; }
+  if (row != 7) { resetActive = false; resetFilledPx = 0; }
 
   switch (row) {
     case 0: case 1: case 2: case 4:
@@ -98,9 +101,14 @@ inline void handleTap(TFT_eSPI& tft, int touchY, int touchX) {
       flashRow(tft, 5, "SPRITE MODE", String(sprModeLabel()));
       break;
     case 6:
-      break; // hold-only reset
+      pRotation = (pRotation == 0) ? 2 : 0;
+      dirty = true;
+      flashRow(tft, 6, "ORIENTATION", String(orientLabel()));
+      break;
     case 7:
-      if (dirty) { save(); flashRow(tft, 7, "SAVE", "SAVED!"); }
+      break; // hold-only reset
+    case 8:
+      if (dirty) { flashRow(tft, 8, "SAVE", "SAVED!"); save(); }
       break;
   }
   needsFullRedraw = true;
@@ -194,7 +202,7 @@ inline void handleHoldTick(TFT_eSPI& tft, int touchY, int touchX, unsigned long 
     int filled = (int)((held * 240UL) / RESET_HOLD_MS);
     if (filled != resetFilledPx) {
       resetFilledPx = filled;
-      int y = rowY(6);
+      int y = rowY(7);
       tft.fillRect(0, y, 240, ROW_H - 1, TFT_BLACK);
       tft.fillRect(0, y, resetFilledPx, ROW_H - 1, TFT_ORANGE);
       tft.setTextSize(1);
@@ -221,7 +229,7 @@ inline void handleHoldTick(TFT_eSPI& tft, int touchY, int touchX, unsigned long 
       sliderLastVal = sliderValForRow(row);
       drawSliderBar(tft, row);
     }
-  } else if (row == 6) {
+  } else if (row == 7) {
     resetActive = true;
     resetHoldStartMs = millis() - elapsedMs;
     sliderRow = -1;
@@ -268,6 +276,7 @@ inline void enter() {
   pQhMode = display_pm::qhMode;
   pCycSec = display_pm::cycSec;
   pDynSprite = dynamicSprite;
+  pRotation = displayRotation;
 }
 
 inline void exit() {
@@ -285,9 +294,12 @@ inline void save() {
   display_pm::setQuietHours(pQhStart, pQhEnd, pQhMode);
   display_pm::setCycle(pCycSec);
   dynamicSprite = pDynSprite;
+  displayRotation = pRotation;
   Preferences p; p.begin("ohmyclawd", false);
   p.putBool("dyn_spr", pDynSprite);
+  p.putUChar("rot", displayRotation);
   p.end();
+  tft.setRotation(displayRotation);
   display_pm::previewActive = false;
   dirty = false;
 }
@@ -316,9 +328,10 @@ inline void render(TFT_eSPI& tft, bool fullRedraw) {
     drawRow(tft, 3, "QUIET MODE", String(qhmLabel()), false);
     drawRow(tft, 4, "AUTO-CYCLE *", cycLabel(), false);
     drawRow(tft, 5, "SPRITE MODE", String(sprModeLabel()), false);
+    drawRow(tft, 6, "ORIENTATION", String(orientLabel()), false);
 
     if (resetActive) {
-      int y = rowY(6);
+      int y = rowY(7);
       tft.fillRect(0, y, 240, ROW_H - 1, TFT_BLACK);
       tft.fillRect(0, y, resetFilledPx, ROW_H - 1, TFT_ORANGE);
       tft.setTextSize(1);
@@ -329,11 +342,11 @@ inline void render(TFT_eSPI& tft, bool fullRedraw) {
       tft.drawString("hold...", VALUE_X, y + 8, 1);
       tft.drawFastHLine(RULE_INDENT, y + ROW_H - 1, 240 - 2 * RULE_INDENT, TFT_DARKGREY);
     } else {
-      drawRow(tft, 6, "RESET", "hold 3s", false);
+      drawRow(tft, 7, "RESET", "hold 3s", false);
     }
 
     // SAVE button — highlighted orange when dirty
-    int sy = rowY(7);
+    int sy = rowY(8);
     if (dirty) {
       tft.fillRect(0, sy, 240, ROW_H - 1, TFT_ORANGE);
       tft.setTextSize(1); tft.setTextColor(TFT_BLACK, TFT_ORANGE);
