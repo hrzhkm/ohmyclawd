@@ -163,7 +163,7 @@ curl -fsSL https://raw.githubusercontent.com/opariffazman/ohmyclawd/master/insta
 
 The daemon runs on your machine (where Claude Code runs), polls the Anthropic API for rate-limit headers, and serves usage data over HTTP.
 
-See [daemon/README.md](daemon/README.md) for full setup instructions and platform downloads.
+See [docs/assets/DAEMON.md](docs/assets/DAEMON.md) for full setup instructions and platform downloads.
 
 ### Configuration
 
