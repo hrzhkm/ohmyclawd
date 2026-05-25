@@ -138,7 +138,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG_MSG=$(git tag -l --format='%(contents)' "${GITHUB_REF_NAME}" | sed '/-----BEGIN SSH SIGNATURE-----/,$d' | head -20)
+          TAG_MSG=$(git tag -l --format='%(contents)' "${GITHUB_REF_NAME}" | sed '/-----BEGIN \(SSH\|PGP\) SIGNATURE-----/,$d' | head -20)
           gh release create "${GITHUB_REF_NAME}" \
             --title "ohmyclawd ${GITHUB_REF_NAME}" \
             --notes "${TAG_MSG}" \
