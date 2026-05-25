@@ -159,35 +159,10 @@ When the daemon or Wi-Fi is unreachable, the usage bars and sprite drain to dark
 curl -fsSL https://raw.githubusercontent.com/opariffazman/ohmyclawd/master/install.sh | sudo bash
 ```
 
-## Daemon
+## Further Docs
 
-The daemon runs on your machine (where Claude Code runs), polls the Anthropic API for rate-limit headers, and serves usage data over HTTP.
-
-See [docs/assets/DAEMON.md](docs/assets/DAEMON.md) for full setup instructions and platform downloads.
-
-### Configuration
-
-| Env var | Default | Description |
-|---------|---------|-------------|
-| `OHMYCLAWD_LISTEN` | `127.0.0.1:8787` | Bind address. Use `:8787` for LAN access |
-| `OHMYCLAWD_TOKEN` | *(empty)* | Bearer token. If set, `/usage` and `/metrics` require `Authorization: Bearer <token>` |
-| `OHMYCLAWD_PROBE_INTERVAL` | `60s` | How often to poll Anthropic rate-limit headers |
-| `OHMYCLAWD_CREDS_PATH` | `~/.claude/.credentials.json` | Path to Claude Code OAuth credentials |
-
-### Access modes
-
-| Scenario | LISTEN | TOKEN |
-|----------|--------|-------|
-| Local only (default) | `127.0.0.1:8787` | unset |
-| LAN (no auth) | `:8787` | unset |
-| LAN (with auth) | `:8787` | `<passphrase>` |
-| Cloudflare Tunnel | `127.0.0.1:8787` | `<passphrase>` |
-
-`/healthz` is always open (no auth required) for health checks.
-
-## Native Screen Recording
-
-Pixel-perfect GIF capture directly from the ESP32 framebuffer — no camera needed. See [docs/assets/NATIVE_RECORDING.md](docs/assets/NATIVE_RECORDING.md) for usage instructions.
+- [Daemon setup, config & auth](docs/assets/DAEMON.md)
+- [Native screen recording](docs/assets/NATIVE_RECORDING.md)
 
 ## Project Structure
 
