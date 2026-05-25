@@ -49,6 +49,7 @@ int claudeWaiting = 0;
 unsigned long lastUsageFetch = 0;
 
 String daemonUrl;
+String daemonToken;
 
 bool captureRecording = false;
 bool captureFrameReady = false;
@@ -158,6 +159,7 @@ void setup() {
 
   prefs.begin("ohmyclawd", false);
   daemonUrl = prefs.getString("url", "http://ohmyclawd.local:8787");
+  daemonToken = prefs.getString("token", "");
   String tzStr = prefs.getString("tz", "UTC-8");
   dynamicSprite = prefs.getBool("dyn_spr", true);
   displayRotation = prefs.getUChar("rot", 0);
@@ -189,8 +191,10 @@ void setup() {
   WiFiManager wm;
   WiFiManagerParameter daemonParam("daemon_url", "Daemon URL", daemonUrl.c_str(), 80);
   WiFiManagerParameter tzParam("timezone", "Timezone (POSIX)", tzStr.c_str(), 40);
+  WiFiManagerParameter tokenParam("daemon_token", "Daemon Token (optional)", daemonToken.c_str(), 40);
   wm.addParameter(&daemonParam);
   wm.addParameter(&tzParam);
+  wm.addParameter(&tokenParam);
   wm.setConfigPortalTimeout(300);
   if (!wm.autoConnect("OhMyClawd")) {
     tft.fillScreen(TFT_BLACK);
@@ -203,12 +207,15 @@ void setup() {
 
   String newUrl = String(daemonParam.getValue());
   String newTz = String(tzParam.getValue());
-  if ((newUrl.length() > 0 && newUrl != daemonUrl) || (newTz.length() > 0 && newTz != tzStr)) {
+  String newToken = String(tokenParam.getValue());
+  if ((newUrl.length() > 0 && newUrl != daemonUrl) || (newTz.length() > 0 && newTz != tzStr) || (newToken != daemonToken)) {
     if (newUrl.length() > 0) daemonUrl = newUrl;
     if (newTz.length() > 0) tzStr = newTz;
+    daemonToken = newToken;
     prefs.begin("ohmyclawd", false);
     prefs.putString("url", daemonUrl);
     prefs.putString("tz", tzStr);
+    prefs.putString("token", daemonToken);
     prefs.end();
   }
 
@@ -344,6 +351,9 @@ void loop() {
 void fetchUsage() {
   HTTPClient http;
   http.begin(daemonUrl + "/usage");
+  if (daemonToken.length() > 0) {
+    http.addHeader("Authorization", "Bearer " + daemonToken);
+  }
   int code = http.GET();
   if (code == 200) {
     offline_ind::recordSuccess();

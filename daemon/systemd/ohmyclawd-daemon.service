@@ -10,9 +10,20 @@ Restart=always
 RestartSec=5
 User=__USER__
 Group=__USER__
-Environment=OHMYCLAWD_LISTEN=:8787
+# Bind address. Options:
+#   127.0.0.1:8787  — localhost only (default, safest)
+#   :8787           — all interfaces (LAN access)
+Environment=OHMYCLAWD_LISTEN=127.0.0.1:8787
+
+# Probe interval for Anthropic rate-limit headers.
 Environment=OHMYCLAWD_PROBE_INTERVAL=60s
+
 # OHMYCLAWD_CREDS_PATH defaults to ~/.claude/.credentials.json under the target user.
+
+# Optional bearer token. If set, /usage and /metrics require:
+#   Authorization: Bearer <token>
+# Leave empty or remove for open access (LAN-only setups).
+# Environment=OHMYCLAWD_TOKEN=
 NoNewPrivileges=true
 PrivateTmp=false
 ProtectSystem=strict

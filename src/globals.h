@@ -10,6 +10,7 @@ extern unsigned long modeTimer;
 extern bool modeChanged;
 extern int usageSession, usageWeekly, usageSR, usageWR, claudeWaiting;
 extern String daemonUrl;
+extern String daemonToken;
 
 // Virtual clock for capture mode (returns millis() normally, fixed-step when recording)
 unsigned long animNow();
