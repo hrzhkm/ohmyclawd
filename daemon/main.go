@@ -13,7 +13,8 @@ import (
 )
 
 func main() {
-	listen := getenv("OHMYCLAWD_LISTEN", ":8787")
+	listen := getenv("OHMYCLAWD_LISTEN", "127.0.0.1:8787")
+	token := getenv("OHMYCLAWD_TOKEN", "")
 	probeInterval := getenvDur("OHMYCLAWD_PROBE_INTERVAL", 60*time.Second)
 	credsPath := getenv("OHMYCLAWD_CREDS_PATH", defaultCredsPath())
 	anthropicURL := getenv("OHMYCLAWD_ANTHROPIC_URL", "https://api.anthropic.com/v1/messages")
@@ -23,7 +24,7 @@ func main() {
 	state := NewState()
 	metrics := NewMetrics()
 	tmux := NewTmuxWatcher()
-	handler := NewHandler(state, metrics, tmux, time.Now)
+	handler := NewHandler(state, metrics, tmux, time.Now, token)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

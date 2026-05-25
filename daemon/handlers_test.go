@@ -12,7 +12,7 @@ func newTestHandler(t *testing.T) (*Handler, *State, *Metrics) {
 	t.Helper()
 	s := NewState()
 	m := NewMetrics()
-	return NewHandler(s, m, nil, func() time.Time { return time.Unix(1747353660, 0) }), s, m
+	return NewHandler(s, m, nil, func() time.Time { return time.Unix(1747353660, 0) }, ""), s, m
 }
 
 func TestUsageHandler200(t *testing.T) {
@@ -35,6 +35,28 @@ func TestHealthzHandler(t *testing.T) {
 	h.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/healthz", nil))
 	if rr.Code != 200 || rr.Body.String() != "ok" {
 		t.Fatalf("body=%q code=%d", rr.Body.String(), rr.Code)
+	}
+}
+
+func TestUsageHandler_BlockedWithoutToken(t *testing.T) {
+	s := NewState()
+	m := NewMetrics()
+	h := NewHandler(s, m, nil, time.Now, "mysecret")
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/usage", nil))
+	if rr.Code != 401 {
+		t.Fatalf("expected 401, got %d", rr.Code)
+	}
+}
+
+func TestHealthz_PassesThroughWithToken(t *testing.T) {
+	s := NewState()
+	m := NewMetrics()
+	h := NewHandler(s, m, nil, time.Now, "mysecret")
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/healthz", nil))
+	if rr.Code != 200 {
+		t.Fatalf("expected 200, got %d", rr.Code)
 	}
 }
 

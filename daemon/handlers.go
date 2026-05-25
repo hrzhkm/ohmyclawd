@@ -25,14 +25,19 @@ type Handler struct {
 	mux     *http.ServeMux
 }
 
-func NewHandler(s *State, m *Metrics, tw *TmuxWatcher, now func() time.Time) *Handler {
+func NewHandler(s *State, m *Metrics, tw *TmuxWatcher, now func() time.Time, token string) *Handler {
 	if now == nil {
 		now = time.Now
 	}
 	h := &Handler{state: s, metrics: m, tmux: tw, now: now, mux: http.NewServeMux()}
-	h.mux.HandleFunc("/usage", h.usage)
+
+	protected := http.NewServeMux()
+	protected.HandleFunc("/usage", h.usage)
+	protected.HandleFunc("/metrics", h.prom)
+
+	h.mux.Handle("/usage", AuthMiddleware(token, protected))
+	h.mux.Handle("/metrics", AuthMiddleware(token, protected))
 	h.mux.HandleFunc("/healthz", h.healthz)
-	h.mux.HandleFunc("/metrics", h.prom)
 	return h
 }
 
